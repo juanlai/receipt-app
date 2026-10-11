@@ -365,7 +365,7 @@
 
             <div class="form-group">
                 <label>商品明细 / 备注</label>
-                <textarea id="editNotes" class="form-control" rows="2" placeholder="可修改或补充商品清单..."></textarea>
+                <textarea id="editNotes" class="form-control" rows="2" placeholder="填写具体买了什么（例如: 2盒牛奶、全麦面包），方便后续 AI 查账回答！"></textarea>
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 18px;">
@@ -391,13 +391,31 @@
 
             <div id="geminiKeyGroup" class="form-group">
                 <label>Gemini API Key</label>
-                <input type="password" id="geminiKeyInput" class="form-control" placeholder="输入你的 Gemini Key">
+                <input type="password" id="geminiKeyInput" class="form-control" placeholder="输入你的 Gemini Key (AIzaSy...)">
+                <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">使用 Google 官方 gemini-1.5-flash 高速多模态模型</p>
             </div>
 
             <div id="qwenKeyGroup" class="form-group" style="display:none;">
-                <label>千问 / OpenAI 兼容 API Key</label>
-                <input type="password" id="qwenKeyInput" class="form-control" placeholder="输入千问 / 硅基流动 / 兼容 Key">
-                <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">千问为全球顶级开源模型，默认不保留数据用于训练。</p>
+                <label>千问接口服务商</label>
+                <select id="qwenProviderSelect" class="form-control" onchange="onQwenProviderChange(this.value)">
+                    <option value="siliconflow">⚡ 硅基流动 SiliconFlow (免翻墙，网页无跨域拦截，推荐)</option>
+                    <option value="dashscope">🏛️ 阿里云百炼官方 DashScope (适用于原生App/代理)</option>
+                    <option value="openrouter">🌐 OpenRouter (含免费版 Qwen 2.5-VL，海外直连)</option>
+                    <option value="custom">🛠️ 自定义兼容接口 (Base URL)</option>
+                </select>
+
+                <div id="qwenCustomUrlGroup" style="display:none; margin-top:8px;">
+                    <label style="font-size:12px;">自定义 Base URL</label>
+                    <input type="text" id="qwenCustomUrlInput" class="form-control" placeholder="例如: https://api.yourproxy.com/v1">
+                </div>
+
+                <div style="margin-top:8px;">
+                    <label id="qwenKeyLabel">API Key</label>
+                    <input type="password" id="qwenKeyInput" class="form-control" placeholder="输入对应平台的 API Key (sk-...)">
+                </div>
+                <p style="font-size:11px; color:var(--text-muted); margin-top:4px;" id="qwenTipText">
+                    提示：纯网页端调用阿里云百炼会被浏览器拦截(CORS)，推荐使用【硅基流动】，国内免翻墙且原生支持网页调用！
+                </p>
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
@@ -450,6 +468,8 @@
         const ENGINE_KEY = "receipt_app_selected_engine";
         const GEMINI_KEY_STORAGE = "my_personal_gemini_key";
         const QWEN_KEY_STORAGE = "my_personal_qwen_key";
+        const QWEN_PROVIDER_STORAGE = "receipt_app_qwen_provider";
+        const QWEN_CUSTOM_URL_STORAGE = "receipt_app_qwen_custom_url";
         const FEEDBACK_STORAGE = "receipt_app_local_feedback_list";
 
         // 获取当前 AI 引擎
@@ -711,13 +731,13 @@
             };
 
             try {
-                const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent', {
+                const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
-                if (data.error) throw new Error(data.error.message);
+                if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
 
                 let text = data.candidates[0].content.parts[0].text;
                 const start = text.indexOf('{'), end = text.lastIndexOf('}');
@@ -732,7 +752,7 @@
                     category: parsed.category || '其他',
                     notes: parsed.notes || '',
                     photo: photoDataUrl,
-                    engine: 'Gemini 3.8'
+                    engine: 'Gemini 1.5'
                 }, true);
             } catch(e) {
                 alert('Gemini 识别出错: ' + e.message);
@@ -752,9 +772,28 @@
                 return;
             }
 
-            const prompt = "请分析这张小票，提取实付RM金额，输出纯JSON: {\"merchant\": \"商家\", \"date\": \"YYYY-MM-DD\", \"amount\": 12.34, \"category\": \"餐饮美食\", \"notes\": \"主要物品\"}";
+            const provider = localStorage.getItem(QWEN_PROVIDER_STORAGE) || "siliconflow";
+            let endpoint = "";
+            let model = "";
+
+            if (provider === "dashscope") {
+                endpoint = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+                model = "qwen-vl-plus";
+            } else if (provider === "openrouter") {
+                endpoint = "https://openrouter.ai/api/v1/chat/completions";
+                model = "qwen/qwen-2.5-vl-72b-instruct";
+            } else if (provider === "custom") {
+                let base = (localStorage.getItem(QWEN_CUSTOM_URL_STORAGE) || "").replace(/\/$/, "");
+                endpoint = base + "/chat/completions";
+                model = "Qwen/Qwen2.5-VL-7B-Instruct";
+            } else {
+                endpoint = "https://api.siliconflow.cn/v1/chat/completions";
+                model = "Qwen/Qwen2.5-VL-7B-Instruct";
+            }
+
+            const prompt = "请分析这张收据小票（通常为马来西亚RM格式），提取实付RM金额，输出纯JSON: {\"merchant\": \"商家\", \"date\": \"YYYY-MM-DD\", \"amount\": 12.34, \"category\": \"餐饮美食\", \"notes\": \"主要物品\"}";
             const payload = {
-                model: "qwen-vl-plus", // 或 qwen2.5-vl
+                model: model,
                 messages: [
                     {
                         role: "user",
@@ -767,14 +806,13 @@
             };
 
             try {
-                // 默认走阿里云百炼官方兼容端点
-                const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+                const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
-                if (data.error) throw new Error(data.error.message);
+                if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
 
                 let text = data.choices[0].message.content;
                 const start = text.indexOf('{'), end = text.lastIndexOf('}');
@@ -792,7 +830,11 @@
                     engine: 'Qwen 2.5-VL'
                 }, true);
             } catch(e) {
-                alert('千问模型识别出错: ' + e.message);
+                let msg = e.message;
+                if (msg.includes('Failed to fetch') && provider === 'dashscope') {
+                    msg = "阿里云百炼官方接口被浏览器拦截(CORS跨域)！\n\n解决方案：\n点击右上角【设置】，将千问服务商切换为【硅基流动 SiliconFlow】（国内免翻墙、原生支持网页调用），或者等待打包成安卓原生App后即可直连阿里云！";
+                }
+                alert('千问模型识别出错: ' + msg);
             } finally {
                 document.getElementById('uploadLoading').style.display = 'none';
                 document.getElementById('cameraInput').value = '';
@@ -906,11 +948,16 @@
             aiLoading.style.display = 'block';
             aiAnswer.style.display = 'none';
 
-            let promptText = `以下是用户保存在账本里的所有真实收据数据：\n`;
-            list.forEach(r => {
-                promptText += `- 日期: ${r.date}, 商家: ${r.merchant}, 金额: RM ${r.amount}, 类别: ${r.category}, 备注: ${r.notes}\n`;
+            let promptText = `你是用户的贴心收据记账财务助手。以下是用户在当前账本中保存的真实收据与消费明细数据：\n`;
+            list.forEach((r, idx) => {
+                promptText += `${idx + 1}. 日期: ${r.date}, 商家: ${r.merchant}, 金额: RM ${Number(r.amount).toFixed(2)}, 分类: ${r.category}, 商品明细/备注: ${r.notes || '未详细填写'}\n`;
             });
-            promptText += `\n用户提问: "${query}"\n请根据账单回答，货币单位为令吉(RM)，给出清晰的统计计算。`;
+            promptText += `\n用户当前提问: "${query}"\n` +
+                `回答规则：\n` +
+                `1. 货币单位统一严格使用马来西亚令吉(RM)；\n` +
+                `2. 如果用户询问“买了什么”，请结合上述所有消费记录中的商家、分类及【商品明细/备注】进行清晰梳理；\n` +
+                `3. 若某笔消费未填写具体商品明细（备注为空），请说明该笔消费的商家、金额和分类，并温馨提醒用户：“该笔记录未录入具体商品名，可在账本列表中点击【✏️ 修改】补充填写”；\n` +
+                `4. 给出清晰、有条理、亲切的回答。`;
 
             const engine = getSelectedEngine();
 
@@ -918,30 +965,63 @@
                 let answer = "";
                 if (engine === 'qwen') {
                     const key = localStorage.getItem(QWEN_KEY_STORAGE) || "";
-                    const res = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+                    if (!key) throw new Error("未配置千问 API Key，请点击右上角【设置】进行填写！");
+
+                    const provider = localStorage.getItem(QWEN_PROVIDER_STORAGE) || "siliconflow";
+                    let endpoint = "";
+                    let chatModel = "";
+
+                    if (provider === "dashscope") {
+                        endpoint = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
+                        chatModel = "qwen-turbo";
+                    } else if (provider === "openrouter") {
+                        endpoint = "https://openrouter.ai/api/v1/chat/completions";
+                        chatModel = "qwen/qwen-2.5-72b-instruct";
+                    } else if (provider === "custom") {
+                        let base = (localStorage.getItem(QWEN_CUSTOM_URL_STORAGE) || "").replace(/\/$/, "");
+                        endpoint = base + "/chat/completions";
+                        chatModel = "Qwen/Qwen2.5-7B-Instruct";
+                    } else {
+                        endpoint = "https://api.siliconflow.cn/v1/chat/completions";
+                        chatModel = "Qwen/Qwen2.5-7B-Instruct";
+                    }
+
+                    const res = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
                         body: JSON.stringify({
-                            model: "qwen-turbo",
+                            model: chatModel,
                             messages: [{ role: "user", content: promptText }]
                         })
                     });
                     const d = await res.json();
+                    if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
                     answer = d.choices[0].message.content;
                 } else {
                     const key = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
-                    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent', {
+                    if (!key) throw new Error("未配置 Gemini API Key，请点击右上角【设置】进行填写！");
+
+                    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
                         body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
                     });
                     const d = await res.json();
-                    answer = d.candidates[0].content.parts[0].text;
+                    if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
+                    if (d.candidates && d.candidates[0] && d.candidates[0].content) {
+                        answer = d.candidates[0].content.parts[0].text;
+                    } else {
+                        answer = "未能从 Gemini 获得有效回复，请重试。";
+                    }
                 }
                 aiAnswer.innerText = answer;
                 aiAnswer.style.display = 'block';
             } catch(e) {
-                aiAnswer.innerText = 'AI 分析失败: ' + e.message;
+                let msg = e.message;
+                if (msg.includes('Failed to fetch') && engine === 'qwen') {
+                    msg = "阿里云百炼官方接口被浏览器拦截(CORS跨域)！\n建议在【设置】中切换为【硅基流动 SiliconFlow】（国内免翻墙直连无跨域），或打包为原生App后使用。";
+                }
+                aiAnswer.innerText = 'AI 分析失败: ' + msg;
                 aiAnswer.style.display = 'block';
             } finally {
                 aiLoading.style.display = 'none';
@@ -953,6 +1033,12 @@
             document.getElementById('engineSelect').value = getSelectedEngine();
             document.getElementById('geminiKeyInput').value = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
             document.getElementById('qwenKeyInput').value = localStorage.getItem(QWEN_KEY_STORAGE) || "";
+            
+            const prov = localStorage.getItem(QWEN_PROVIDER_STORAGE) || "siliconflow";
+            document.getElementById('qwenProviderSelect').value = prov;
+            document.getElementById('qwenCustomUrlInput').value = localStorage.getItem(QWEN_CUSTOM_URL_STORAGE) || "";
+            onQwenProviderChange(prov);
+
             onEngineChange(getSelectedEngine());
             document.getElementById('settingsModal').style.display = 'flex';
         }
@@ -966,6 +1052,20 @@
             document.getElementById('qwenKeyGroup').style.display = (val === 'qwen') ? 'block' : 'none';
         }
 
+        function onQwenProviderChange(prov) {
+            document.getElementById('qwenCustomUrlGroup').style.display = (prov === 'custom') ? 'block' : 'none';
+            const tip = document.getElementById('qwenTipText');
+            if (prov === 'siliconflow') {
+                tip.innerText = "⚡ 硅基流动：国内免翻墙直连，支持网页跨域，模型为官方满血 Qwen 2.5-VL，注册即赠送免费额度！";
+            } else if (prov === 'dashscope') {
+                tip.innerText = "🏛️ 阿里云百炼官方：网页端直接调用会被浏览器拦截(CORS)，适用于打包成安卓原生App或自带代理。";
+            } else if (prov === 'openrouter') {
+                tip.innerText = "🌐 OpenRouter：海外直连，支持网页调用，包含免费版与付费版 Qwen 2.5 系列。";
+            } else {
+                tip.innerText = "🛠️ 自定义：请输入兼容 OpenAI 格式的 API 端点地址。";
+            }
+        }
+
         function saveSettings() {
             const eng = document.getElementById('engineSelect').value;
             localStorage.setItem(ENGINE_KEY, eng);
@@ -975,6 +1075,12 @@
 
             const qKey = document.getElementById('qwenKeyInput').value.trim();
             if (qKey) localStorage.setItem(QWEN_KEY_STORAGE, qKey);
+
+            const prov = document.getElementById('qwenProviderSelect').value;
+            localStorage.setItem(QWEN_PROVIDER_STORAGE, prov);
+
+            const customUrl = document.getElementById('qwenCustomUrlInput').value.trim();
+            if (customUrl) localStorage.setItem(QWEN_CUSTOM_URL_STORAGE, customUrl);
 
             updateEngineUI();
             closeSettingsModal();
