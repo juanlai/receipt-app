@@ -165,81 +165,317 @@
         }
         .search-input:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1); }
 
-        /* 统计栏 */
-        .stats-bar { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            font-size: 13px; 
-            color: var(--text-muted); 
-            margin-bottom: 12px; 
-            padding: 10px 14px; 
-            background: #f1f5f9; 
-            border-radius: 12px; 
+        /* 英雄总览支出卡片 (Copilot Money 风格) */
+        .hero-spending-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+            position: relative;
+            overflow: hidden;
         }
-        .total-amount { color: var(--accent); font-weight: 900; font-size: 18px; }
+        .hero-spending-card::after {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 140px; height: 140px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.2), transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .hero-spending-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .hero-spending-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .hero-receipt-count {
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 3px 9px;
+            border-radius: 20px;
+            color: #e2e8f0;
+            backdrop-filter: blur(4px);
+        }
+        .hero-spending-amount {
+            font-size: 28px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            margin-bottom: 14px;
+        }
+        .hero-metrics-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto 1.2fr;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .hero-metric-item { display: flex; flex-direction: column; }
+        .hero-metric-sub { font-size: 10.5px; color: #94a3b8; margin-bottom: 2px; }
+        .hero-metric-val { font-size: 13px; font-weight: 800; color: #f8fafc; }
+        .hero-metric-divider { width: 1px; height: 24px; background: rgba(255, 255, 255, 0.12); }
 
-        /* 收据卡片 */
+        /* AI 智能问账卡片与快捷标签 */
+        .ai-chips-scroll {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 10px 0 2px;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .ai-chips-scroll::-webkit-scrollbar { display: none; }
+        .ai-chip {
+            flex-shrink: 0;
+            background: #f1f5f9;
+            color: #334155;
+            padding: 7px 13px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: 0.15s;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .ai-chip:active {
+            background: #e0f2fe;
+            color: #0369a1;
+            border-color: #bae6fd;
+            transform: scale(0.96);
+        }
+
+        /* 呼吸加载动效 */
+        .ai-loading-container {
+            margin-top: 14px;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+        }
+        .ai-shimmer-bar {
+            height: 4px;
+            width: 100%;
+            background: linear-gradient(90deg, #e2e8f0 25%, #38bdf8 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            border-radius: 2px;
+            animation: shimmer 1.5s infinite;
+            margin-bottom: 10px;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .ai-loading-text {
+            font-size: 13px;
+            font-weight: 700;
+            color: #0284c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .ai-pulse-dot {
+            width: 8px; height: 8px;
+            background: #0284c7;
+            border-radius: 50%;
+            animation: pulseDot 1s infinite alternate;
+        }
+        @keyframes pulseDot { from { opacity: 0.3; transform: scale(0.8); } to { opacity: 1; transform: scale(1.2); } }
+
+        /* 结构化 AI 回答卡片 (视觉层级) */
+        .ai-answer-card {
+            margin-top: 14px;
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+            display: none;
+            animation: modalIn 0.2s ease-out;
+        }
+        .ai-answer-header {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .ai-bot-badge {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .ai-actions-bar { display: flex; gap: 6px; }
+        .ai-mini-btn {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .ai-mini-btn:active { background: #f1f5f9; transform: scale(0.96); }
+
+        .ai-answer-body {
+            padding: 16px 14px;
+            font-size: 14px;
+            line-height: 1.65;
+            color: #1e293b;
+        }
+        .ai-section-title {
+            font-size: 14.5px;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 14px 0 8px;
+            padding-left: 8px;
+            border-left: 3.5px solid var(--primary-light);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .ai-section-title:first-child { margin-top: 0; }
+        .ai-para { margin-bottom: 10px; line-height: 1.65; }
+        .ai-rm-badge {
+            display: inline-block;
+            background: #fef2f2;
+            color: #e11d48;
+            font-weight: 800;
+            padding: 1px 7px;
+            border-radius: 6px;
+            border: 1px solid #fecdd3;
+            font-size: 13.5px;
+            margin: 0 2px;
+        }
+        .ai-list-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: flex-start;
+            background: #f8fafc;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #f1f5f9;
+        }
+        .ai-bullet { color: var(--primary-light); font-weight: 900; line-height: 1.4; }
+        .ai-row-text { flex: 1; font-size: 13.5px; line-height: 1.5; }
+        .ai-tip-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #1e40af;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            line-height: 1.5;
+        }
+        .ai-bold { color: #0f172a; font-weight: 800; }
+
+        /* 收据卡片 (带语义分类色与头像) */
         .receipt-item { 
-            border-left: 5px solid var(--primary-light); 
-            padding: 16px; 
-            background: #fff; 
+            background: #ffffff; 
             margin-bottom: 12px; 
-            border-radius: 14px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03); 
+            border-radius: 16px; 
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); 
             border: 1px solid var(--border-color);
+            border-left: 5px solid var(--primary-light);
             transition: 0.15s; 
         }
-        .receipt-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-        .merchant { font-weight: 800; font-size: 17px; color: var(--text-main); }
-        .amount { color: var(--accent); font-weight: 900; font-size: 19px; }
-        .receipt-info { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.5; }
+        .receipt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .merchant-area { display: flex; align-items: center; gap: 8px; }
+        .merchant-avatar { 
+            width: 32px; height: 32px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 15px; 
+            flex-shrink: 0;
+        }
+        .merchant { font-weight: 800; font-size: 16.5px; color: var(--text-main); }
+        .amount { color: #0f172a; font-weight: 900; font-size: 19px; }
+        
+        .receipt-meta-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .cat-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .receipt-note-box {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-size: 12.5px;
+            color: #475569;
+            margin-bottom: 10px;
+            border-left: 3px solid #cbd5e1;
+            line-height: 1.4;
+        }
         
         .receipt-photo-thumb {
-            width: 50px;
-            height: 50px;
+            width: 54px;
+            height: 54px;
             object-fit: cover;
             border-radius: 8px;
             cursor: pointer;
-            border: 1px solid #cbd5e1;
+            border: 1.5px solid #e2e8f0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }
 
-        .actions { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding-top: 8px; border-top: 1px dashed var(--border-color); }
-        .btn-edit { background: #e0f2fe; color: #0284c7; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 700; }
-        .btn-del { background: #fee2e2; color: #dc2626; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 700; }
-
-        /* 弹窗 Modal */
-        .modal-overlay { 
-            position: fixed; 
-            top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(15, 23, 42, 0.65); 
-            display: none; 
+        .actions { 
+            display: flex; 
+            gap: 8px; 
             align-items: center; 
-            justify-content: center; 
-            z-index: 9999; 
-            padding: 16px; 
-            backdrop-filter: blur(4px); 
+            justify-content: space-between; 
+            padding-top: 10px; 
+            border-top: 1px dashed var(--border-color); 
         }
-        .modal-box { 
-            background: white; 
-            border-radius: 24px; 
-            width: 100%; 
-            max-width: 480px; 
-            padding: 24px; 
-            box-shadow: 0 16px 36px rgba(0,0,0,0.25); 
-            animation: modalIn 0.2s ease-out; 
-            max-height: 90vh; 
-            overflow-y: auto; 
+        .btn-edit { background: #e0f2fe; color: #0284c7; border: none; padding: 6px 13px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 700; }
+        .btn-del { background: #fee2e2; color: #dc2626; border: none; padding: 6px 13px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 700; }
+
+        /* 空状态卡片 */
+        .empty-state {
+            text-align: center;
+            padding: 36px 16px;
+            color: #94a3b8;
         }
-        @keyframes modalIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        .form-group { margin-bottom: 13px; }
-        .form-group label { display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 5px; }
-        .form-control { width: 100%; padding: 11px 13px; border: 1.5px solid var(--border-color); border-radius: 12px; font-size: 14px; outline: none; }
-        .form-control:focus { border-color: var(--primary-light); }
-
-        .loading { display: none; text-align: center; color: var(--primary); font-size: 14px; margin: 12px 0; font-weight: 700; }
-        .ai-answer { margin-top: 12px; padding: 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; font-size: 14px; color: #166534; display: none; line-height: 1.6; white-space: pre-wrap; }
+        .empty-icon { font-size: 44px; margin-bottom: 8px; }
+        .empty-title { font-size: 15px; font-weight: 800; color: #475569; margin-bottom: 4px; }
+        .empty-sub { font-size: 12px; color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -285,15 +521,50 @@
             <div id="uploadLoading" class="loading">⏳ 正在处理收据中，请稍候...</div>
         </div>
 
-        <!-- 专属 AI 查账 (当选择手动模式时自动隐藏或提示) -->
+        <!-- 专属 AI 查账卡片 (Copilot Money 交互设计风格) -->
         <div class="card" id="aiQueryCard">
-            <h3 style="font-size: 15px; margin-bottom: 8px;" id="aiCardTitle">🤖 智能问账分析</h3>
-            <div style="display:flex; gap:8px;">
-                <input type="text" id="aiQuery" class="search-input" placeholder="例如: 我买数码一共花了多少钱？">
-                <button class="btn btn-primary" style="width: auto; padding: 10px 18px;" onclick="askAi()">提问</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="font-size: 15.5px; font-weight:800; display:flex; align-items:center; gap:6px; color:var(--primary);" id="aiCardTitle">
+                    <span>🤖</span> <span>智能财务问账顾问</span>
+                </h3>
+                <span style="font-size:11px; font-weight:700; color:var(--primary-light); background:#eff6ff; padding:3px 9px; border-radius:12px;">支持问明细 · 查总额</span>
             </div>
-            <div id="aiLoading" class="loading">🔍 正在统计分析账单明细...</div>
-            <div id="aiAnswer" class="ai-answer"></div>
+
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="aiQuery" class="search-input" placeholder="例如: 我买数码一共花了多少钱？" onkeydown="if(event.key==='Enter') askAi()">
+                <button class="btn btn-primary" style="width: auto; padding: 10px 18px; white-space:nowrap;" onclick="askAi()">提问</button>
+            </div>
+
+            <!-- 猜你想问快捷胶囊（Suggested Quick Chips） -->
+            <div class="ai-chips-scroll">
+                <button type="button" class="ai-chip" onclick="quickAsk('统计我最近的所有消费明细与总支出')">📊 消费总支出</button>
+                <button type="button" class="ai-chip" onclick="quickAsk('我最近在超市和餐饮分别买了什么东西？')">🛒 买了什么商品</button>
+                <button type="button" class="ai-chip" onclick="quickAsk('哪一笔消费金额最高？买了什么？')">🔝 哪笔消费最贵</button>
+                <button type="button" class="ai-chip" onclick="quickAsk('餐饮美食一共消费了多少令吉？')">🍔 餐饮开销统计</button>
+                <button type="button" class="ai-chip" onclick="quickAsk('帮我分析目前的消费习惯并给出省钱建议')">💡 财务省钱建议</button>
+            </div>
+
+            <!-- 呼吸光效加载状态 -->
+            <div id="aiLoading" class="ai-loading-container" style="display:none;">
+                <div class="ai-shimmer-bar"></div>
+                <div class="ai-loading-text">
+                    <span class="ai-pulse-dot"></span> 财务 AI 顾问正在翻阅账本、计算梳理中...
+                </div>
+            </div>
+
+            <!-- 结构化排版回答卡片 -->
+            <div id="aiAnswerCard" class="ai-answer-card">
+                <div class="ai-answer-header">
+                    <div class="ai-bot-badge">
+                        <span id="aiAnswerBotName">✨ 智能财务顾问分析</span>
+                    </div>
+                    <div class="ai-actions-bar">
+                        <button type="button" class="ai-mini-btn" onclick="copyAiAnswer()">📋 复制</button>
+                        <button type="button" class="ai-mini-btn" onclick="closeAiAnswer()">✕ 收起</button>
+                    </div>
+                </div>
+                <div id="aiAnswerBody" class="ai-answer-body"></div>
+            </div>
         </div>
 
         <!-- 多维时间/分类/搜索筛选器 -->
@@ -328,9 +599,29 @@
                     <button onclick="renderCurrentUser()" style="background:none; border:none; color:var(--primary-light); font-size:12px; cursor:pointer; font-weight:600;">🔄 刷新</button>
                 </div>
             </div>
-            <div class="stats-bar">
-                <span id="totalCount">共 0 条收据</span>
-                <span id="totalAmount" class="total-amount">RM 0.00</span>
+            <!-- 英雄总览支出卡片 (Copilot Money 风格) -->
+            <div class="hero-spending-card">
+                <div class="hero-spending-header">
+                    <span class="hero-spending-label" id="heroPeriodLabel">📊 支出总览</span>
+                    <span class="hero-receipt-count" id="totalCount">0 笔支出</span>
+                </div>
+                <div class="hero-spending-amount" id="totalAmount">RM 0.00</div>
+                <div class="hero-metrics-row">
+                    <div class="hero-metric-item">
+                        <span class="hero-metric-sub">单笔最高</span>
+                        <span class="hero-metric-val" id="heroMaxAmount">RM 0.00</span>
+                    </div>
+                    <div class="hero-metric-divider"></div>
+                    <div class="hero-metric-item">
+                        <span class="hero-metric-sub">笔均开销</span>
+                        <span class="hero-metric-val" id="heroAvgAmount">RM 0.00</span>
+                    </div>
+                    <div class="hero-metric-divider"></div>
+                    <div class="hero-metric-item">
+                        <span class="hero-metric-sub">主要支出类别</span>
+                        <span class="hero-metric-val" id="heroTopCategory">无</span>
+                    </div>
+                </div>
             </div>
             <div id="receiptList"></div>
         </div>
@@ -401,9 +692,9 @@
             <div id="qwenKeyGroup" class="form-group" style="display:none;">
                 <label>千问接口服务商</label>
                 <select id="qwenProviderSelect" class="form-control" onchange="onQwenProviderChange(this.value)">
-                    <option value="siliconflow">⚡ 硅基流动 SiliconFlow (免翻墙，网页无跨域拦截，推荐)</option>
-                    <option value="dashscope">🏛️ 阿里云百炼官方 DashScope (适用于原生App/代理)</option>
-                    <option value="openrouter">🌐 OpenRouter (含免费版 Qwen 2.5-VL，海外直连)</option>
+                    <option value="openrouter">🌐 OpenRouter (马来西亚首选：Google一键登录，无需手机号，含免费版千问)</option>
+                    <option value="siliconflow">⚡ 硅基流动 SiliconFlow (需中国大陆 +86 手机号)</option>
+                    <option value="dashscope">🏛️ 阿里云百炼官方 DashScope (需中国大陆 +86 手机号)</option>
                     <option value="custom">🛠️ 自定义兼容接口 (Base URL)</option>
                 </select>
 
@@ -468,6 +759,117 @@
 
     <script>
         const categories = ["餐饮美食", "超市便利", "交通出行", "休闲娱乐", "医疗保健", "电子数码", "其他"];
+
+        // 语义化分类视觉配置 (色彩心理学 & 扁平马卡龙调色)
+        const CATEGORY_STYLES = {
+            "餐饮美食": { icon: "🍔", color: "#b91c1c", bg: "#fee2e2", border: "#fca5a5" },
+            "超市便利": { icon: "🛒", color: "#b45309", bg: "#fef3c7", border: "#fcd34d" },
+            "交通出行": { icon: "🚗", color: "#0369a1", bg: "#e0f2fe", border: "#7dd3fc" },
+            "休闲娱乐": { icon: "🎮", color: "#7e22ce", bg: "#f3e8ff", border: "#d8b4fe" },
+            "医疗保健": { icon: "💊", color: "#15803d", bg: "#dcfce7", border: "#86efac" },
+            "电子数码": { icon: "📱", color: "#4338ca", bg: "#e0e7ff", border: "#a5b4fc" },
+            "其他":     { icon: "📦", color: "#475569", bg: "#f1f5f9", border: "#cbd5e1" }
+        };
+
+        function getCategoryMeta(cat) {
+            return CATEGORY_STYLES[cat] || CATEGORY_STYLES["其他"];
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // AI 回答视觉结构化排版引擎
+        let lastAiRawResponse = "";
+
+        function highlightRMAmounts(text) {
+            return text.replace(/(?:RM|令吉)\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]{1,2})?|[0-9]+(?:\.[0-9]{1,2})?)/gi, (m, num) => {
+                return '<span class="ai-rm-badge">RM ' + num.trim() + '</span>';
+            });
+        }
+
+        function formatInlineMarkdown(text) {
+            let out = text.replace(/\*\*(.*?)\*\*/g, '<strong class="ai-bold">$1</strong>');
+            out = out.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            out = highlightRMAmounts(out);
+            return out;
+        }
+
+        function formatAiResponseHtml(raw) {
+            if (!raw) return '';
+            const lines = raw.split('\n');
+            let html = '';
+
+            lines.forEach(line => {
+                let trimmed = line.trim();
+                if (!trimmed) return;
+
+                // 标题层级 (### 或 ##)
+                if (/^#{1,4}\s+/.test(trimmed)) {
+                    let headingText = trimmed.replace(/^#{1,4}\s+/, '');
+                    headingText = highlightRMAmounts(headingText);
+                    html += '<div class="ai-section-title">' + headingText + '</div>\n';
+                    return;
+                }
+
+                // 提示与省钱建议气泡 (💡, 建议, 提示等)
+                if (/^(💡|提示|建议|省钱建议|温馨提醒|小贴士|>\s*)/.test(trimmed)) {
+                    let tipText = trimmed.replace(/^(💡|提示|建议|省钱建议|温馨提醒|小贴士|>\s*)[:：]?\s*/, '');
+                    tipText = formatInlineMarkdown(tipText);
+                    html += '<div class="ai-tip-box"><span style="font-size:16px; flex-shrink:0;">💡</span><div>' + tipText + '</div></div>\n';
+                    return;
+                }
+
+                // 列表条目 (*, -, •, 1. 等)
+                const listMatch = trimmed.match(/^(\*|-|•|\d+[\.、])\s+(.+)$/);
+                if (listMatch) {
+                    let itemContent = formatInlineMarkdown(listMatch[2]);
+                    html += '<div class="ai-list-row"><span class="ai-bullet">✦</span><div class="ai-row-text">' + itemContent + '</div></div>\n';
+                    return;
+                }
+
+                // 普通段落
+                let paraContent = formatInlineMarkdown(trimmed);
+                html += '<p class="ai-para">' + paraContent + '</p>\n';
+            });
+
+            return html;
+        }
+
+        function quickAsk(text) {
+            const input = document.getElementById('aiQuery');
+            if (input) {
+                input.value = text;
+                askAi();
+            }
+        }
+
+        function copyAiAnswer() {
+            if (!lastAiRawResponse) return;
+            navigator.clipboard.writeText(lastAiRawResponse).then(() => {
+                const btns = document.querySelectorAll('.ai-mini-btn');
+                if (btns && btns.length > 0) {
+                    const originalText = btns[0].innerText;
+                    btns[0].innerText = '✅ 已复制';
+                    setTimeout(() => { btns[0].innerText = originalText; }, 2000);
+                }
+            }).catch(() => {
+                alert('已复制到剪贴板');
+            });
+        }
+
+        function closeAiAnswer() {
+            const card = document.getElementById('aiAnswerCard');
+            if (card) {
+                card.style.display = 'none';
+            }
+        }
 
         // 存储键定义
         const USERS_KEY = "receipt_app_users_list";
@@ -628,6 +1030,22 @@
                 return true;
             });
 
+            // 更新 Hero 总览卡片周期标题标签
+            const heroPeriodLabel = document.getElementById('heroPeriodLabel');
+            if (heroPeriodLabel) {
+                if (d) {
+                    heroPeriodLabel.innerText = `📅 ${d} 消费总览`;
+                } else if (y !== 'ALL' && m !== 'ALL') {
+                    heroPeriodLabel.innerText = `📅 ${y}年${m}月 消费总览`;
+                } else if (y !== 'ALL') {
+                    heroPeriodLabel.innerText = `📅 ${y}年度 消费总览`;
+                } else if (c !== 'ALL') {
+                    heroPeriodLabel.innerText = `🏷️ ${c} 分类总览`;
+                } else {
+                    heroPeriodLabel.innerText = '📊 支出总览';
+                }
+            }
+
             const isFiltered = (y !== 'ALL' || m !== 'ALL' || c !== 'ALL' || d !== '' || k !== '');
             renderList(filtered, isFiltered);
         }
@@ -650,37 +1068,107 @@
         function renderList(list, isFiltered = false) {
             const listDiv = document.getElementById('receiptList');
             let total = 0;
-            list.forEach(r => total += (Number(r.amount) || 0));
+            let maxAmount = 0;
+            const catSums = {};
 
-            const countPrefix = isFiltered ? '🔍 筛选结果: ' : '共 ';
-            document.getElementById('totalCount').innerText = countPrefix + list.length + ' 条收据';
-            document.getElementById('totalAmount').innerText = 'RM ' + total.toFixed(2);
+            list.forEach(r => {
+                const amt = Number(r.amount) || 0;
+                total += amt;
+                if (amt > maxAmount) maxAmount = amt;
+                const cat = r.category || '其他';
+                catSums[cat] = (catSums[cat] || 0) + amt;
+            });
+
+            const avgAmount = list.length > 0 ? (total / list.length) : 0;
+
+            // 找出总金额最高的支出类别
+            let topCat = '无';
+            let topCatMax = 0;
+            for (let cat in catSums) {
+                if (catSums[cat] > topCatMax) {
+                    topCatMax = catSums[cat];
+                    topCat = cat;
+                }
+            }
+
+            // 更新 Hero 总览卡片核心指标
+            const totalCountEl = document.getElementById('totalCount');
+            if (totalCountEl) totalCountEl.innerText = `${list.length} 笔支出`;
+
+            const totalAmountEl = document.getElementById('totalAmount');
+            if (totalAmountEl) totalAmountEl.innerText = 'RM ' + total.toFixed(2);
+
+            const heroMaxEl = document.getElementById('heroMaxAmount');
+            if (heroMaxEl) heroMaxEl.innerText = 'RM ' + maxAmount.toFixed(2);
+
+            const heroAvgEl = document.getElementById('heroAvgAmount');
+            if (heroAvgEl) heroAvgEl.innerText = 'RM ' + avgAmount.toFixed(2);
+
+            const heroTopCatEl = document.getElementById('heroTopCategory');
+            if (heroTopCatEl) {
+                if (topCat !== '无') {
+                    const meta = getCategoryMeta(topCat);
+                    heroTopCatEl.innerText = `${meta.icon} ${topCat}`;
+                } else {
+                    heroTopCatEl.innerText = '无';
+                }
+            }
 
             if (!list || list.length === 0) {
-                listDiv.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:24px;">暂无收据记录</p>';
+                listDiv.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🧾</div>
+                        <div class="empty-title">暂无收据记录</div>
+                        <div class="empty-sub">${isFiltered ? '未找到符合条件的账单，可尝试重置筛选' : '点击上方“拍照识别”或“手动输入”开始第一笔记账吧'}</div>
+                    </div>
+                `;
                 return;
             }
 
-            listDiv.innerHTML = list.map(r => `
-                <div class="receipt-item">
-                    <div class="receipt-header">
-                        <span class="merchant">${r.merchant}</span>
-                        <span class="amount">RM ${Number(r.amount).toFixed(2)}</span>
-                    </div>
-                    <div class="receipt-info">
-                        <span>📅 ${r.date}</span> &nbsp;|&nbsp; <span>🏷️ ${r.category}</span>
-                        ${r.notes ? `<div style="margin-top:4px;">📝 ${r.notes}</div>` : ''}
-                    </div>
-                    ${r.photo ? `<div style="margin-bottom:8px;"><img src="${r.photo}" class="receipt-photo-thumb" onclick="previewFullPhoto('${r.photo}')" title="点击查看大图"></div>` : ''}
-                    <div class="actions">
-                        <span style="font-size:11px; color:#94a3b8;">${r.engine ? '由 ' + r.engine + ' 录入' : '手动录入'}</span>
-                        <div style="display:flex; gap:6px;">
-                            <button class="btn-edit" onclick="editReceipt('${r.id}')">✏️ 修改</button>
-                            <button class="btn-del" onclick="deleteReceipt('${r.id}')">删除</button>
+            listDiv.innerHTML = list.map(r => {
+                const meta = getCategoryMeta(r.category);
+                const amt = Number(r.amount) || 0;
+                return `
+                    <div class="receipt-item" style="border-left-color: ${meta.color};">
+                        <div class="receipt-header">
+                            <div class="merchant-area">
+                                <div class="merchant-avatar" style="background:${meta.bg}; color:${meta.color}; border: 1px solid ${meta.border};">
+                                    ${meta.icon}
+                                </div>
+                                <span class="merchant">${escapeHtml(r.merchant || '未命名商家')}</span>
+                            </div>
+                            <span class="amount">RM ${amt.toFixed(2)}</span>
+                        </div>
+
+                        <div class="receipt-meta-row">
+                            <span class="cat-pill" style="background:${meta.bg}; color:${meta.color}; border:1px solid ${meta.border};">
+                                ${meta.icon} ${escapeHtml(r.category || '其他')}
+                            </span>
+                            <span>📅 ${escapeHtml(r.date || '')}</span>
+                        </div>
+
+                        ${r.notes ? `
+                            <div class="receipt-note-box">
+                                <b>📝 明细备注:</b> ${escapeHtml(r.notes)}
+                            </div>
+                        ` : ''}
+
+                        ${r.photo ? `
+                            <div style="margin-bottom:10px;">
+                                <img src="${r.photo}" class="receipt-photo-thumb" onclick="previewFullPhoto('${r.photo}')" title="点击查看大图">
+                            </div>
+                        ` : ''}
+
+                        <div class="actions">
+                            <span style="font-size:11px; color:#94a3b8;">${r.engine ? '由 ' + escapeHtml(r.engine) + ' 录入' : '手动录入'}</span>
+                            <div style="display:flex; gap:6px;">
+                                <button class="btn-edit" onclick="editReceipt('${r.id}')">✏️ 修改</button>
+                                <button class="btn-del" onclick="deleteReceipt('${r.id}')">删除</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function previewFullPhoto(dataUrl) {
@@ -805,7 +1293,7 @@
                 return;
             }
 
-            const provider = localStorage.getItem(QWEN_PROVIDER_STORAGE) || "siliconflow";
+            const provider = localStorage.getItem(QWEN_PROVIDER_STORAGE) || "openrouter";
             let endpoint = "";
             let model = "";
 
@@ -814,7 +1302,7 @@
                 model = "qwen-vl-plus";
             } else if (provider === "openrouter") {
                 endpoint = "https://openrouter.ai/api/v1/chat/completions";
-                model = "qwen/qwen-2.5-vl-72b-instruct";
+                model = "qwen/qwen-2.5-vl-72b-instruct:free";
             } else if (provider === "custom") {
                 let base = (localStorage.getItem(QWEN_CUSTOM_URL_STORAGE) || "").replace(/\/$/, "");
                 endpoint = base + "/chat/completions";
@@ -974,25 +1462,36 @@
             if (!query) return;
 
             const list = getCurrentUserReceipts();
-            if (list.length === 0) { alert('账本暂无收据，请先记一笔账！'); return; }
+            if (list.length === 0) { 
+                alert('账本暂无收据，请先记一笔账！'); 
+                return; 
+            }
 
             const aiLoading = document.getElementById('aiLoading');
-            const aiAnswer = document.getElementById('aiAnswer');
-            aiLoading.style.display = 'block';
-            aiAnswer.style.display = 'none';
+            const aiAnswerCard = document.getElementById('aiAnswerCard');
+            const aiAnswerBody = document.getElementById('aiAnswerBody');
+            const aiAnswerBotName = document.getElementById('aiAnswerBotName');
 
-            let promptText = `你是用户的贴心收据记账财务助手。以下是用户在当前账本中保存的真实收据与消费明细数据：\n`;
+            aiLoading.style.display = 'block';
+            aiAnswerCard.style.display = 'none';
+
+            const engine = getSelectedEngine();
+            if (aiAnswerBotName) {
+                aiAnswerBotName.innerText = engine === 'qwen' ? '✨ 通义千问财务顾问' : '✨ Gemini 智能财务顾问';
+            }
+
+            let promptText = `你是专业的个人消费财务顾问。以下是用户在当前账本中保存的真实收据与消费明细数据：\n`;
             list.forEach((r, idx) => {
                 promptText += `${idx + 1}. 日期: ${r.date}, 商家: ${r.merchant}, 金额: RM ${Number(r.amount).toFixed(2)}, 分类: ${r.category}, 商品明细/备注: ${r.notes || '未详细填写'}\n`;
             });
             promptText += `\n用户当前提问: "${query}"\n` +
-                `回答规则：\n` +
-                `1. 货币单位统一严格使用马来西亚令吉(RM)；\n` +
-                `2. 如果用户询问“买了什么”，请结合上述所有消费记录中的商家、分类及【商品明细/备注】进行清晰梳理；\n` +
-                `3. 若某笔消费未填写具体商品明细（备注为空），请说明该笔消费的商家、金额和分类，并温馨提醒用户：“该笔记录未录入具体商品名，可在账本列表中点击【✏️ 修改】补充填写”；\n` +
-                `4. 给出清晰、有条理、亲切的回答。`;
-
-            const engine = getSelectedEngine();
+                `请遵循以下格式规范生成整洁、易读、富有视觉层次的财务分析：\n` +
+                `1. 货币单位统一严格使用马来西亚令吉格式，例如: RM 15.00，不要使用其他货币符号；\n` +
+                `2. 使用清晰的 Markdown 层次结构：包含 2-3 个核心小标题（例如: "### 📊 消费总览"、"### 🛒 重点明细"、"### 💡 财务洞察与省钱建议"）；\n` +
+                `3. 具体明细或梳理请使用列表符号 (* 或 -) 逐条列出，重点商家和金额用粗体强调；\n` +
+                `4. 如果某笔消费未填写具体商品明细（备注为空），可贴心提醒用户：“该笔记录可在账本列表中点击【✏️ 修改】补充填写商品名”；\n` +
+                `5. 最后给出 1 条简短实用的理财建议（以 "💡 省钱建议：" 开头）；\n` +
+                `6. 语言亲切专业、条理分明，避免杂乱的一大坨纯文字。`;
 
             try {
                 let answer = "";
@@ -1000,7 +1499,7 @@
                     const key = localStorage.getItem(QWEN_KEY_STORAGE) || "";
                     if (!key) throw new Error("未配置千问 API Key，请点击右上角【设置】进行填写！");
 
-                    const provider = localStorage.getItem(QWEN_PROVIDER_STORAGE) || "siliconflow";
+                    const provider = localStorage.getItem(QWEN_PROVIDER_STORAGE) || "openrouter";
                     let endpoint = "";
                     let chatModel = "";
 
@@ -1009,7 +1508,7 @@
                         chatModel = "qwen-turbo";
                     } else if (provider === "openrouter") {
                         endpoint = "https://openrouter.ai/api/v1/chat/completions";
-                        chatModel = "qwen/qwen-2.5-72b-instruct";
+                        chatModel = "qwen/qwen-2.5-72b-instruct:free";
                     } else if (provider === "custom") {
                         let base = (localStorage.getItem(QWEN_CUSTOM_URL_STORAGE) || "").replace(/\/$/, "");
                         endpoint = base + "/chat/completions";
@@ -1038,15 +1537,23 @@
                     const result = await fetchGeminiWithFallback(payload, key);
                     answer = result.text;
                 }
-                aiAnswer.innerText = answer;
-                aiAnswer.style.display = 'block';
+
+                lastAiRawResponse = answer;
+                aiAnswerBody.innerHTML = formatAiResponseHtml(answer);
+                aiAnswerCard.style.display = 'block';
             } catch(e) {
                 let msg = e.message;
                 if (msg.includes('Failed to fetch') && engine === 'qwen') {
-                    msg = "阿里云百炼官方接口被浏览器拦截(CORS跨域)！\n建议在【设置】中切换为【硅基流动 SiliconFlow】（国内免翻墙直连无跨域），或打包为原生App后使用。";
+                    msg = "阿里云百炼官方接口被浏览器拦截(CORS跨域)！\n建议在【设置】中切换为【OpenRouter (免手机号海外直连)】，或打包为原生App后使用。";
                 }
-                aiAnswer.innerText = 'AI 分析失败: ' + msg;
-                aiAnswer.style.display = 'block';
+                lastAiRawResponse = 'AI 分析失败: ' + msg;
+                aiAnswerBody.innerHTML = `
+                    <div style="background:#fef2f2; border:1px solid #fecdd3; border-radius:10px; padding:12px; color:#b91c1c; font-size:13px; line-height:1.5;">
+                        <b>❌ 分析出错</b><br>
+                        ${escapeHtml(msg).replace(/\n/g, '<br>')}
+                    </div>
+                `;
+                aiAnswerCard.style.display = 'block';
             } finally {
                 aiLoading.style.display = 'none';
             }
@@ -1058,7 +1565,7 @@
             document.getElementById('geminiKeyInput').value = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
             document.getElementById('qwenKeyInput').value = localStorage.getItem(QWEN_KEY_STORAGE) || "";
             
-            const prov = localStorage.getItem(QWEN_PROVIDER_STORAGE) || "siliconflow";
+            const prov = localStorage.getItem(QWEN_PROVIDER_STORAGE) || "openrouter";
             document.getElementById('qwenProviderSelect').value = prov;
             document.getElementById('qwenCustomUrlInput').value = localStorage.getItem(QWEN_CUSTOM_URL_STORAGE) || "";
             onQwenProviderChange(prov);
@@ -1079,12 +1586,12 @@
         function onQwenProviderChange(prov) {
             document.getElementById('qwenCustomUrlGroup').style.display = (prov === 'custom') ? 'block' : 'none';
             const tip = document.getElementById('qwenTipText');
-            if (prov === 'siliconflow') {
-                tip.innerText = "⚡ 硅基流动：国内免翻墙直连，支持网页跨域，模型为官方满血 Qwen 2.5-VL，注册即赠送免费额度！";
+            if (prov === 'openrouter') {
+                tip.innerText = "🌐 OpenRouter：最适合马来西亚用户！直接使用 Google 账号一键登录即可创建 API Key，完全无需任何手机号码，包含免费版通义千问！";
+            } else if (prov === 'siliconflow') {
+                tip.innerText = "⚡ 硅基流动：国内平台，需要中国大陆 +86 手机号注册。";
             } else if (prov === 'dashscope') {
-                tip.innerText = "🏛️ 阿里云百炼官方：网页端直接调用会被浏览器拦截(CORS)，适用于打包成安卓原生App或自带代理。";
-            } else if (prov === 'openrouter') {
-                tip.innerText = "🌐 OpenRouter：海外直连，支持网页调用，包含免费版与付费版 Qwen 2.5 系列。";
+                tip.innerText = "🏛️ 阿里云百炼官方：国内平台，需要中国大陆 +86 手机号与实名认证。";
             } else {
                 tip.innerText = "🛠️ 自定义：请输入兼容 OpenAI 格式的 API 端点地址。";
             }
