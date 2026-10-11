@@ -138,6 +138,7 @@
         .btn-secondary { background: #e2e8f0; color: #475569; }
 
         input[type="file"] { display: none; }
+        .loading { display: none; text-align: center; color: var(--primary); font-size: 13.5px; font-weight: 700; padding: 10px; margin-top: 10px; }
 
         /* 筛选器 */
         .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
@@ -591,7 +592,7 @@
             <!-- 纯手动无图快速记账入口 -->
             <button class="btn" style="background:#f1f5f9; color:#475569; margin-top:10px; font-size:13px; padding:10px;" onclick="openManualNewReceipt()">✍️ 不拍照，直接手动输入记账</button>
 
-            <div id="uploadLoading" class="loading">⏳ 正在处理收据中，请稍候...</div>
+            <div id="uploadLoading" class="loading" style="display:none;">⏳ 正在处理收据中，请稍候...</div>
         </div>
 
         <!-- 专属 AI 查账卡片 (Copilot Money 交互设计风格) -->
@@ -1378,47 +1379,80 @@
 
             const provider = localStorage.getItem(QWEN_PROVIDER_STORAGE) || "openrouter";
             let endpoint = "";
-            let model = "";
+            let candidateVisionModels = [];
 
             if (provider === "dashscope") {
                 endpoint = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
-                model = "qwen-vl-plus";
+                candidateVisionModels = ["qwen-vl-plus"];
             } else if (provider === "openrouter") {
                 endpoint = "https://openrouter.ai/api/v1/chat/completions";
-                model = "qwen/qwen-2.5-vl-72b-instruct:free";
+                // 优先 Qwen-VL，若 OpenRouter 免费池轮换，自动无缝降级到当前可用的高质量免费视觉模型
+                candidateVisionModels = [
+                    "qwen/qwen-2.5-vl-72b-instruct:free",
+                    "google/gemma-4-31b-it:free",
+                    "google/gemma-4-26b-a4b-it:free",
+                    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+                    "qwen/qwen2.5-vl-72b-instruct"
+                ];
             } else if (provider === "custom") {
                 let base = (localStorage.getItem(QWEN_CUSTOM_URL_STORAGE) || "").replace(/\/$/, "");
                 endpoint = base + "/chat/completions";
-                model = "Qwen/Qwen2.5-VL-7B-Instruct";
+                candidateVisionModels = ["Qwen/Qwen2.5-VL-7B-Instruct"];
             } else {
                 endpoint = "https://api.siliconflow.cn/v1/chat/completions";
-                model = "Qwen/Qwen2.5-VL-7B-Instruct";
+                candidateVisionModels = ["Qwen/Qwen2.5-VL-7B-Instruct"];
             }
 
             const prompt = "请分析这张收据小票（通常为马来西亚RM格式），提取实付RM金额，输出纯JSON: {\"merchant\": \"商家\", \"date\": \"YYYY-MM-DD\", \"amount\": 12.34, \"category\": \"餐饮美食\", \"notes\": \"主要物品\"}";
-            const payload = {
-                model: model,
-                messages: [
-                    {
-                        role: "user",
-                        content: [
-                            { type: "text", text: prompt },
-                            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Data}` } }
-                        ]
-                    }
-                ]
-            };
 
             try {
-                const res = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+                let lastErr = null;
+                let successContent = null;
+                let usedModelName = "开源多模态大模型";
 
-                let text = data.choices[0].message.content;
+                for (let m of candidateVisionModels) {
+                    try {
+                        const payload = {
+                            model: m,
+                            messages: [
+                                {
+                                    role: "user",
+                                    content: [
+                                        { type: "text", text: prompt },
+                                        { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Data}` } }
+                                    ]
+                                }
+                            ]
+                        };
+
+                        const res = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+                            body: JSON.stringify(payload)
+                        });
+                        const data = await res.json();
+                        if (data.error) {
+                            const errMsg = data.error.message || JSON.stringify(data.error);
+                            if (errMsg.includes('unavailable') || errMsg.includes('free') || errMsg.includes('credits') || data.error.code === 402 || data.error.code === 404) {
+                                lastErr = errMsg;
+                                continue;
+                            }
+                            throw new Error(errMsg);
+                        }
+                        if (data.choices && data.choices[0] && data.choices[0].message) {
+                            successContent = data.choices[0].message.content;
+                            usedModelName = m.includes('qwen') ? 'Qwen 2.5-VL' : 'OpenRouter ' + m.split('/')[1];
+                            break;
+                        }
+                    } catch(e) {
+                        lastErr = e.message;
+                        if (m === candidateVisionModels[candidateVisionModels.length - 1]) throw e;
+                    }
+                }
+
+                if (!successContent) throw new Error(lastErr || "模型识别失败");
+
+                let text = successContent;
                 const start = text.indexOf('{'), end = text.lastIndexOf('}');
                 if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
                 const parsed = JSON.parse(text);
@@ -1431,12 +1465,12 @@
                     category: parsed.category || '其他',
                     notes: parsed.notes || '',
                     photo: photoDataUrl,
-                    engine: 'Qwen 2.5-VL'
+                    engine: usedModelName
                 }, true);
             } catch(e) {
                 let msg = e.message;
                 if (msg.includes('Failed to fetch') && provider === 'dashscope') {
-                    msg = "阿里云百炼官方接口被浏览器拦截(CORS跨域)！\n\n解决方案：\n点击右上角【设置】，将千问服务商切换为【硅基流动 SiliconFlow】（国内免翻墙、原生支持网页调用），或者等待打包成安卓原生App后即可直连阿里云！";
+                    msg = "阿里云百炼官方接口被浏览器拦截(CORS跨域)！\n\n解决方案：\n点击右上角【设置】，将千问服务商切换为【OpenRouter (海外直连)】或【硅基流动 SiliconFlow】！";
                 }
                 alert('千问模型识别出错: ' + msg);
             } finally {
@@ -1584,34 +1618,60 @@
 
                     const provider = localStorage.getItem(QWEN_PROVIDER_STORAGE) || "openrouter";
                     let endpoint = "";
-                    let chatModel = "";
+                    let candidateChatModels = [];
 
                     if (provider === "dashscope") {
                         endpoint = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
-                        chatModel = "qwen-turbo";
+                        candidateChatModels = ["qwen-turbo"];
                     } else if (provider === "openrouter") {
                         endpoint = "https://openrouter.ai/api/v1/chat/completions";
-                        chatModel = "qwen/qwen-2.5-72b-instruct:free";
+                        // 优先 Qwen 2.5，若免费额度轮换，自动无缝降级至 OpenRouter 官方当前活跃的免费大模型
+                        candidateChatModels = [
+                            "qwen/qwen-2.5-72b-instruct:free",
+                            "google/gemma-4-31b-it:free",
+                            "google/gemma-4-26b-a4b-it:free",
+                            "nvidia/nemotron-3.5-lightning:free",
+                            "qwen/qwen-2.5-72b-instruct"
+                        ];
                     } else if (provider === "custom") {
                         let base = (localStorage.getItem(QWEN_CUSTOM_URL_STORAGE) || "").replace(/\/$/, "");
                         endpoint = base + "/chat/completions";
-                        chatModel = "Qwen/Qwen2.5-7B-Instruct";
+                        candidateChatModels = ["Qwen/Qwen2.5-7B-Instruct"];
                     } else {
                         endpoint = "https://api.siliconflow.cn/v1/chat/completions";
-                        chatModel = "Qwen/Qwen2.5-7B-Instruct";
+                        candidateChatModels = ["Qwen/Qwen2.5-7B-Instruct"];
                     }
 
-                    const res = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-                        body: JSON.stringify({
-                            model: chatModel,
-                            messages: [{ role: "user", content: promptText }]
-                        })
-                    });
-                    const d = await res.json();
-                    if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
-                    answer = d.choices[0].message.content;
+                    let lastChatErr = null;
+                    for (let m of candidateChatModels) {
+                        try {
+                            const res = await fetch(endpoint, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+                                body: JSON.stringify({
+                                    model: m,
+                                    messages: [{ role: "user", content: promptText }]
+                                })
+                            });
+                            const d = await res.json();
+                            if (d.error) {
+                                const errMsg = d.error.message || JSON.stringify(d.error);
+                                if (errMsg.includes('unavailable') || errMsg.includes('free') || errMsg.includes('credits') || d.error.code === 402 || d.error.code === 404) {
+                                    lastChatErr = errMsg;
+                                    continue;
+                                }
+                                throw new Error(errMsg);
+                            }
+                            if (d.choices && d.choices[0] && d.choices[0].message) {
+                                answer = d.choices[0].message.content;
+                                break;
+                            }
+                        } catch(e) {
+                            lastChatErr = e.message;
+                            if (m === candidateChatModels[candidateChatModels.length - 1]) throw e;
+                        }
+                    }
+                    if (!answer) throw new Error(lastChatErr || "AI 未返回分析结果");
                 } else {
                     const key = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
                     if (!key) throw new Error("未配置 Gemini API Key，请点击右上角【设置】进行填写！");
