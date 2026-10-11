@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="theme-color" content="#1e3c72">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -422,6 +425,11 @@
                 <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
                 <button class="btn btn-secondary" onclick="closeSettingsModal()">关闭</button>
             </div>
+
+            <div style="border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 16px; text-align: center;">
+                <span style="font-size:12px; color:var(--text-muted);">版本: v1.2 (最新修复版)</span><br>
+                <button type="button" class="btn" style="background:#f1f5f9; color:#1e293b; margin-top:6px; font-size:12px; padding:8px;" onclick="forceRefreshApp()">🔄 强制清除缓存并同步最新版</button>
+            </div>
         </div>
     </div>
 
@@ -715,6 +723,38 @@
             reader.readAsDataURL(file);
         });
 
+        // 自动多版本容错调用 Google Gemini API
+        async function fetchGeminiWithFallback(payload, key) {
+            const models = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+            let lastErr = null;
+            for (let m of models) {
+                try {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const d = await res.json();
+                    if (d.error) {
+                        lastErr = d.error.message || JSON.stringify(d.error);
+                        // 如果报 404 (Not Found)，自动切换下一个候选版本
+                        if (d.error.code === 404 || lastErr.toLowerCase().includes('not found')) {
+                            continue;
+                        }
+                        throw new Error(lastErr);
+                    }
+                    if (d.candidates && d.candidates[0] && d.candidates[0].content) {
+                        return { text: d.candidates[0].content.parts[0].text, model: m };
+                    }
+                } catch(e) {
+                    lastErr = e.message;
+                    if (lastErr.toLowerCase().includes('not found')) continue;
+                    throw e;
+                }
+            }
+            throw new Error(lastErr || "所有候选 Gemini 模型版本均无法访问，请检查 API Key");
+        }
+
         // Gemini 识别
         async function processWithGemini(base64Data, photoDataUrl) {
             const key = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
@@ -731,15 +771,8 @@
             };
 
             try {
-                const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-
-                let text = data.candidates[0].content.parts[0].text;
+                const result = await fetchGeminiWithFallback(payload, key);
+                let text = result.text;
                 const start = text.indexOf('{'), end = text.lastIndexOf('}');
                 if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
                 const parsed = JSON.parse(text);
@@ -752,7 +785,7 @@
                     category: parsed.category || '其他',
                     notes: parsed.notes || '',
                     photo: photoDataUrl,
-                    engine: 'Gemini 1.5'
+                    engine: result.model
                 }, true);
             } catch(e) {
                 alert('Gemini 识别出错: ' + e.message);
@@ -1001,18 +1034,9 @@
                     const key = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
                     if (!key) throw new Error("未配置 Gemini API Key，请点击右上角【设置】进行填写！");
 
-                    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
-                    });
-                    const d = await res.json();
-                    if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
-                    if (d.candidates && d.candidates[0] && d.candidates[0].content) {
-                        answer = d.candidates[0].content.parts[0].text;
-                    } else {
-                        answer = "未能从 Gemini 获得有效回复，请重试。";
-                    }
+                    const payload = { contents: [{ parts: [{ text: promptText }] }] };
+                    const result = await fetchGeminiWithFallback(payload, key);
+                    answer = result.text;
                 }
                 aiAnswer.innerText = answer;
                 aiAnswer.style.display = 'block';
@@ -1085,6 +1109,17 @@
             updateEngineUI();
             closeSettingsModal();
             alert("✅ 设置已保存！");
+        }
+
+        // 强制刷新并清除客户端缓存
+        function forceRefreshApp() {
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    for (let name of names) caches.delete(name);
+                });
+            }
+            const cleanUrl = window.location.origin + window.location.pathname;
+            window.location.href = cleanUrl + '?update=' + Date.now();
         }
 
         // 意见反馈 (Feedback)
