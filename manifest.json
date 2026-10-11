@@ -1,15 +1,20 @@
 {
   "name": "智能收据管家",
   "short_name": "收据助手",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#1e3c72",
   "theme_color": "#1e3c72",
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "192x192 512x512",
+      "src": "icon.svg",
+      "sizes": "any",
       "type": "image/svg+xml"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }

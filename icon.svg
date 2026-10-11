@@ -1,9 +1,74 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="22" fill="#2a5298"/>
-  <path d="M28 20 h44 a6 6 0 0 1 6 6 v52 l-7 -5 l-7 5 l-7 -5 l-7 5 l-7 -5 l-7 5 l-7 -5 l-7 5 v-52 a6 6 0 0 1 6 -6 z" fill="#ffffff"/>
-  <line x1="38" y1="36" x2="62" y2="36" stroke="#2a5298" stroke-width="4" stroke-linecap="round"/>
-  <line x1="38" y1="46" x2="62" y2="46" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
-  <line x1="38" y1="54" x2="52" y2="54" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
-  <circle cx="58" cy="62" r="9" fill="#e11d48"/>
-  <text x="58" y="66" font-size="9" font-family="Arial" font-weight="bold" fill="#fff" text-anchor="middle">RM</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- 背景现代蓝青渐变 -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3c72"/>
+      <stop offset="100%" stop-color="#2a5298"/>
+    </linearGradient>
+
+    <!-- 收据白色微立体渐变 -->
+    <linearGradient id="paperGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8fafc"/>
+    </linearGradient>
+
+    <!-- 扫描光束渐变 -->
+    <linearGradient id="scanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.1"/>
+      <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.1"/>
+    </linearGradient>
+
+    <!-- 阴影滤镜 -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- 圆角外框底座 (Squircle) -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGrad)"/>
+
+  <!-- 主体：锯齿收据纸张 (带轻投影) -->
+  <g filter="url(#dropShadow)">
+    <path d="M140 100 
+             C140 88 150 78 162 78 
+             H350 
+             C362 78 372 88 372 100 
+             V390 
+             L352 405 L332 390 L312 405 L292 390 L272 405 L252 390 L232 405 L212 390 L192 405 L172 390 L152 405 L140 395 
+             Z" 
+          fill="url(#paperGrad)"/>
+
+    <!-- 收据上的打孔/标题横条装饰 -->
+    <rect x="180" y="125" width="152" height="18" rx="9" fill="#1e293b"/>
+    
+    <!-- 收据上的清单横线 (模拟小票明细) -->
+    <line x1="180" y1="175" x2="332" y2="175" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+    <line x1="180" y1="210" x2="300" y2="210" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round"/>
+    <line x1="180" y1="245" x2="332" y2="245" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round"/>
+    <line x1="180" y1="280" x2="260" y2="280" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round"/>
+
+    <!-- 虚线分割线 (小票经典总计分割线) -->
+    <line x1="170" y1="315" x2="342" y2="315" stroke="#94a3b8" stroke-width="3" stroke-dasharray="8 6"/>
+
+    <!-- 底部金额徽章 (RM) -->
+    <circle cx="256" cy="355" r="22" fill="#e11d48"/>
+    <text x="256" y="362" font-family="-apple-system, BlinkMacSystemFont, Arial, sans-serif" font-weight="900" font-size="16" fill="#ffffff" text-anchor="middle">RM</text>
+  </g>
+
+  <!-- 激光扫描效果 (扫描光束横穿收据，体现相机+OCR意象) -->
+  <line x1="110" y1="228" x2="402" y2="228" stroke="url(#scanGrad)" stroke-width="6" stroke-linecap="round"/>
+  <polygon points="120,222 400,222 390,234 130,234" fill="url(#scanGrad)" opacity="0.4"/>
+
+  <!-- 四角相机镜头取景线 (强调拍照/扫描心智) -->
+  <g stroke="#38bdf8" stroke-width="8" stroke-linecap="round" fill="none">
+    <!-- 左上 -->
+    <path d="M 105 155 V 115 A 10 10 0 0 1 115 105 H 155" />
+    <!-- 右上 -->
+    <path d="M 357 105 H 397 A 10 10 0 0 1 407 115 V 155" />
+    <!-- 左下 -->
+    <path d="M 105 357 V 397 A 10 10 0 0 0 115 407 H 155" />
+    <!-- 右下 -->
+    <path d="M 357 407 H 397 A 10 10 0 0 0 407 397 V 357" />
+  </g>
 </svg>
