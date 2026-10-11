@@ -476,6 +476,79 @@
         .empty-icon { font-size: 44px; margin-bottom: 8px; }
         .empty-title { font-size: 15px; font-weight: 800; color: #475569; margin-bottom: 4px; }
         .empty-sub { font-size: 12px; color: #94a3b8; }
+
+        /* 模态弹窗遮罩层 (全屏固定居中浮动 & 高级磨砂毛玻璃) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            box-sizing: border-box;
+        }
+
+        /* 模态弹窗内容卡片 */
+        .modal-box {
+            background: #ffffff;
+            width: 100%;
+            max-width: 480px;
+            max-height: 88vh;
+            overflow-y: auto;
+            border-radius: 20px;
+            padding: 24px 20px;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+            animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.92) translateY(16px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* 表单控件美化 */
+        .form-group {
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            text-align: left;
+        }
+        .form-group label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1.5px solid var(--border-color);
+            font-size: 14px;
+            color: var(--text-main);
+            background: #ffffff;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.15s;
+            font-family: inherit;
+        }
+        .form-control:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.12);
+        }
+        textarea.form-control {
+            resize: vertical;
+        }
     </style>
 </head>
 <body>
@@ -893,6 +966,16 @@
             initCategoryFilter();
             updateEngineUI();
             renderCurrentUser();
+
+            // 点击弹窗背景遮罩外部快速关闭弹窗
+            document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.style.display = 'none';
+                        if (this.id === 'editModal') activeEditReceipt = null;
+                    }
+                });
+            });
         };
 
         // 更新引擎 UI 提示
