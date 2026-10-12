@@ -869,6 +869,54 @@
             border-radius: 5px;
         }
 
+        
+        /* 本机历史反馈卡片流 */
+        .fb-history-list {
+            margin-top: 12px;
+            max-height: 220px;
+            overflow-y: auto;
+            text-align: left;
+            display: none;
+            padding: 4px;
+        }
+        .fb-card {
+            background: #F8FAFC;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        .fb-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .fb-badge {
+            background: #EFF6FF;
+            color: #2563EB;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            font-size: 11px;
+        }
+        .fb-time {
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+        .fb-body {
+            background: #FFFFFF;
+            border: 1px solid rgba(0,0,0,0.04);
+            border-radius: 8px;
+            padding: 8px 10px;
+            color: var(--text-main);
+            line-height: 1.5;
+            word-break: break-word;
+            white-space: pre-wrap;
+            margin-top: 4px;
+        }
+
         /* 隐藏的真实文件控件与兼容控件 */
         input[type="file"] { display: none; }
         .loading { display: none; text-align: center; color: var(--primary); font-size: 13.5px; font-weight: 700; padding: 10px; margin-top: 10px; }
@@ -909,7 +957,45 @@
 
     <div class="container">
 
-        <!-- 2. 英雄总览支出卡片 (Copilot Money 极简风) -->
+        <!-- 1. 快捷小工具行 (包含无图手动记账等，移至顶部) -->
+        <div class="quick-actions-bar">
+            <button type="button" class="subtle-action-btn" id="manualNewBtn" onclick="openManualNewReceipt()">
+                ✍️ <span id="manualNewBtnText">无图手动记账</span>
+            </button>
+            <div style="display:flex; gap:10px;">
+                <button type="button" class="subtle-action-btn" id="exportBackupBtn" onclick="exportUserData()">
+                    💾 <span id="exportBackupBtnText">导出备份</span>
+                </button>
+                <button type="button" class="subtle-action-btn" id="refreshListBtn" onclick="renderCurrentUser()">
+                    🔄 <span id="refreshListBtnText">刷新</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. 聚合搜索与分段分类滚动条 (置于大 Dashboard 正上方) -->
+        <div class="filter-section">
+            <div class="search-bar-row">
+                <div class="search-pill">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="filterKeyword" class="search-input-sleek" placeholder="🔍 快速搜索商家名或商品..." oninput="applyFilters()">
+                </div>
+                <!-- 唤起高级时光轴与金额筛选抽屉 -->
+                <button class="filter-more-btn" id="openFilterBtn" onclick="openFilterDrawer()" title="更多筛选 (时间/金额)">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    <span id="filterMoreBtnText">筛选</span>
+                </button>
+            </div>
+
+            <!-- 水平滚动分类胶囊条 (✨ 全部, 🍔 餐饮美食, etc.) -->
+            <div class="cat-chips-scroll" id="catChipsScroll">
+                <!-- 动态由 updateCategoryChipsUI() 渲染 -->
+            </div>
+        </div>
+
+        <!-- 处理中提示条 -->
+        <div id="uploadLoading" class="loading">⏳ 正在由 AI 压缩并识别收据中...</div>
+
+        <!-- 3. 英雄总览支出卡片 (Copilot Money 极简风大 Dashboard，置于分类筛选正下方) -->
         <div class="hero-wallet-card">
             <div class="hero-top-row">
                 <div class="hero-meta-left">
@@ -942,43 +1028,6 @@
             </div>
         </div>
 
-        <!-- 快捷小工具行 -->
-        <div class="quick-actions-bar">
-            <button type="button" class="subtle-action-btn" id="manualNewBtn" onclick="openManualNewReceipt()">
-                ✍️ <span id="manualNewBtnText">无图手动记账</span>
-            </button>
-            <div style="display:flex; gap:10px;">
-                <button type="button" class="subtle-action-btn" id="exportBackupBtn" onclick="exportUserData()">
-                    💾 <span id="exportBackupBtnText">导出备份</span>
-                </button>
-                <button type="button" class="subtle-action-btn" id="refreshListBtn" onclick="renderCurrentUser()">
-                    🔄 <span id="refreshListBtnText">刷新</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- 处理中提示条 -->
-        <div id="uploadLoading" class="loading">⏳ 正在由 AI 压缩并识别收据中...</div>
-
-        <!-- 3. 聚合搜索与分段分类滚动条 -->
-        <div class="filter-section">
-            <div class="search-bar-row">
-                <div class="search-pill">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" id="filterKeyword" class="search-input-sleek" placeholder="🔍 快速搜索商家名或商品..." oninput="applyFilters()">
-                </div>
-                <!-- 唤起高级时光轴筛选抽屉 -->
-                <button class="filter-more-btn" id="openFilterBtn" onclick="openFilterDrawer()" title="更多时光轴筛选">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                    <span id="filterMoreBtnText">筛选</span>
-                </button>
-            </div>
-
-            <!-- 水平滚动分类胶囊条 -->
-            <div class="cat-chips-scroll" id="catChipsScroll">
-                <!-- 动态由 updateCategoryChipsUI() 渲染 -->
-            </div>
-        </div>
 
         <!-- 4. 收据明细流 -->
         <div class="transactions-header">
@@ -1130,6 +1179,14 @@
                 <input type="date" id="filterExactDate" class="form-control" onchange="applyFilters()">
             </div>
 
+            <div class="form-group">
+                <label id="filterAmountLabel">💰 按金额范围筛选 (RM)</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <input type="number" step="0.01" id="filterMinAmount" class="form-control" placeholder="最低金额 (Min RM)" oninput="applyFilters()">
+                    <input type="number" step="0.01" id="filterMaxAmount" class="form-control" placeholder="最高金额 (Max RM)" oninput="applyFilters()">
+                </div>
+            </div>
+
             <!-- 内部保持 filterCategory 下拉供 JS 读写 -->
             <select id="filterCategory" style="display:none;" onchange="applyFilters()">
                 <option value="ALL">ALL</option>
@@ -1195,6 +1252,18 @@
             </div>
 
             <div class="form-group">
+                <label id="i18n_backendUrlLabel">💻 电脑端 C++ 服务地址 (接收电脑端反馈与同步)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="backendUrlInput" class="form-control" placeholder="例如: http://localhost:9090 或 http://电脑局域网IP:9090" style="flex:1;">
+                    <button type="button" class="btn" style="width:auto; padding:0 14px; font-size:12px; background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; font-weight:700;" onclick="testBackendConnection()" id="testBackendBtn">📡 测试</button>
+                </div>
+                <p style="font-size:11px; color:var(--text-muted); margin-top:4px;" id="backendUrlTip">
+                    电脑运行 ReceiptAssistant.exe 时填入电脑 IP:9090，手机提交即可直达电脑本地 feedback/ 文件夹！
+                </p>
+                <div id="backendPingResult" style="font-size:12px; margin-top:5px; font-weight:600; display:none;"></div>
+            </div>
+
+            <div class="form-group">
                 <label id="i18n_fbEmailLabel">📬 接收反馈的邮箱 (接收用户手机提交)</label>
                 <input type="email" id="devFeedbackEmailInput" class="form-control" placeholder="输入接收反馈的邮箱 (如: your_email@gmail.com)">
                 <p style="font-size:11px; color:var(--text-muted); margin-top:4px;" id="i18n_fbEmailTip">
@@ -1249,8 +1318,16 @@
                 <button class="btn btn-secondary" id="closeFbBtn" onclick="closeFeedbackModal()">取消</button>
             </div>
 
-            <div style="border-top:1px dashed var(--border-color); padding-top:12px; margin-top:14px; text-align:center;">
-                <button type="button" class="btn" style="background:#f1f5f9; color:#475569; font-size:12px; padding:7px;" id="exportFbBtn" onclick="exportFeedbackData()">📥 导出/查看本机历史反馈 (JSON)</button>
+            <div style="border-top:1px dashed var(--border-color); padding-top:14px; margin-top:14px; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn" style="flex:1; background:#f1f5f9; color:#334155; font-size:12px; padding:8px 6px;" id="exportFbTxtBtn" onclick="exportFeedbackAsText()">📄 导出纯文本报告 (.txt)</button>
+                    <button type="button" class="btn" style="flex:1; background:#f1f5f9; color:#334155; font-size:12px; padding:8px 6px;" id="exportFbCsvBtn" onclick="exportFeedbackAsCsv()">📊 导出 Excel 表格 (.csv)</button>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn" style="flex:1; background:#eff6ff; color:#2563eb; font-size:12px; padding:8px 6px;" id="viewFbHistoryBtn" onclick="toggleFeedbackHistoryView()">📜 查看历史反馈记录 (<span id="fbCountBadge">0</span>)</button>
+                    <button type="button" class="btn" style="flex:1; background:#f0fdf4; color:#16a34a; font-size:12px; padding:8px 6px;" id="mailtoFbBtn" onclick="openMailtoFeedback()">✉️ 调起邮件直发到电脑</button>
+                </div>
+                <div id="feedbackHistoryList" class="fb-history-list"></div>
             </div>
         </div>
     </div>
@@ -1466,6 +1543,7 @@
         const FEEDBACK_STORAGE = "receipt_app_local_feedback_list";
         const LANG_STORAGE_KEY = "receipt_app_language";
         const FEEDBACK_EMAIL_STORAGE = "receipt_app_feedback_email";
+        const BACKEND_URL_STORAGE = "receipt_app_backend_url";
 
         const CATEGORY_NAMES_EN = {
             "餐饮美食": "Food & Dining",
@@ -1548,6 +1626,17 @@
                 i18n_fbEmailLabel: "📬 接收反馈的邮箱 (接收用户手机提交)",
                 fbEmailPlaceholder: "输入接收反馈的邮箱 (如: your_email@gmail.com)",
                 i18n_fbEmailTip: "配置后，用户在手机端提交的反馈将通过 Web3Forms 免费直发至此邮箱，电脑即时查阅！",
+                filterAmountLabel: "💰 按金额范围筛选 (RM)",
+                filterMinAmountPlaceholder: "最低金额 (Min RM)",
+                filterMaxAmountPlaceholder: "最高金额 (Max RM)",
+                i18n_backendUrlLabel: "💻 电脑端 C++ 服务地址 (接收电脑端反馈与同步)",
+                backendUrlPlaceholder: "例如: http://localhost:9090 或 http://电脑局域网IP:9090",
+                backendUrlTip: "电脑运行 ReceiptAssistant.exe 时填入电脑 IP:9090，手机提交即可直达电脑本地 feedback/ 文件夹！",
+                testBackendBtn: "📡 测试",
+                exportFbTxtBtn: "📄 导出纯文本报告 (.txt)",
+                exportFbCsvBtn: "📊 导出 Excel 表格 (.csv)",
+                viewFbHistoryBtn: "📜 查看历史反馈记录",
+                mailtoFbBtn: "✉️ 调起邮件直发到电脑",
                 saveSettingsBtn: "保存设置",
                 closeSettingsBtn: "关闭",
                 appVersionText: "版本: v1.4 (Apple HIG & 弹簧微交互重构)",
@@ -1677,11 +1766,15 @@
             localStorage.setItem(LANG_STORAGE_KEY, lang);
             const sel = document.getElementById('langSelect');
             if (sel && sel.value !== lang) sel.value = lang;
-            applyLanguage();
+            // 自动刷新页面以彻底清除任何渲染缓存，确保 100% 所有组件以新语言重新加载
+            window.location.reload();
         }
 
         function applyLanguage() {
             const isEn = getCurrentLanguage() === 'en';
+            document.title = t('appTitle');
+            const appHeaderTitle = document.getElementById('appHeaderTitle');
+            if (appHeaderTitle) appHeaderTitle.innerText = t('appTitle');
 
             const langToggleBtn = document.getElementById('langToggleBtn');
             if (langToggleBtn) langToggleBtn.innerText = t('langToggle');
@@ -1770,6 +1863,43 @@
 
             const heroTopSub = document.getElementById('heroTopSub');
             if (heroTopSub) heroTopSub.innerText = t('heroTopSub');
+
+            
+            // 金额筛选
+            const filterAmountLabel = document.getElementById('filterAmountLabel');
+            if (filterAmountLabel) filterAmountLabel.innerText = t('filterAmountLabel');
+            const filterMinAmount = document.getElementById('filterMinAmount');
+            if (filterMinAmount) filterMinAmount.placeholder = t('filterMinAmountPlaceholder');
+            const filterMaxAmount = document.getElementById('filterMaxAmount');
+            if (filterMaxAmount) filterMaxAmount.placeholder = t('filterMaxAmountPlaceholder');
+
+            // 电脑端服务地址
+            const i18n_backendUrlLabel = document.getElementById('i18n_backendUrlLabel');
+            if (i18n_backendUrlLabel) i18n_backendUrlLabel.innerText = t('i18n_backendUrlLabel');
+            const backendUrlInput = document.getElementById('backendUrlInput');
+            if (backendUrlInput) backendUrlInput.placeholder = t('backendUrlPlaceholder');
+            const backendUrlTip = document.getElementById('backendUrlTip');
+            if (backendUrlTip) backendUrlTip.innerText = t('backendUrlTip');
+            const testBackendBtn = document.getElementById('testBackendBtn');
+            if (testBackendBtn) testBackendBtn.innerText = t('testBackendBtn');
+
+            // 人类语言反馈按钮
+            const exportFbTxtBtn = document.getElementById('exportFbTxtBtn');
+            if (exportFbTxtBtn) exportFbTxtBtn.innerText = t('exportFbTxtBtn');
+            const exportFbCsvBtn = document.getElementById('exportFbCsvBtn');
+            if (exportFbCsvBtn) exportFbCsvBtn.innerText = t('exportFbCsvBtn');
+            const viewFbHistoryBtn = document.getElementById('viewFbHistoryBtn');
+            if (viewFbHistoryBtn) viewFbHistoryBtn.innerText = t('viewFbHistoryBtn') + ' (' + (JSON.parse(localStorage.getItem(FEEDBACK_STORAGE) || '[]').length) + ')';
+            const mailtoFbBtn = document.getElementById('mailtoFbBtn');
+            if (mailtoFbBtn) mailtoFbBtn.innerText = t('mailtoFbBtn');
+
+            // 重新填充编辑模态框的分类下拉菜单
+            const editCatSel = document.getElementById('editCategory');
+            if (editCatSel) {
+                const prevCat = editCatSel.value;
+                editCatSel.innerHTML = categories.map(c => `<option value="${c}">${escapeHtml(getCategoryDisplayName(c))}</option>`).join('');
+                if (prevCat) editCatSel.value = prevCat;
+            }
 
             // 编辑模态框
             if (document.getElementById('editMerchantLabel')) document.getElementById('editMerchantLabel').innerText = t('editMerchantLabel');
@@ -2116,8 +2246,17 @@
             const c = (document.getElementById('filterCategory') && document.getElementById('filterCategory').value) || 'ALL';
             const d = (document.getElementById('filterExactDate') && document.getElementById('filterExactDate').value) || '';
             const k = (document.getElementById('filterKeyword') && document.getElementById('filterKeyword').value.trim().toLowerCase()) || '';
+            
+            // 金额区间输入筛选
+            const minAStr = (document.getElementById('filterMinAmount') && document.getElementById('filterMinAmount').value.trim()) || '';
+            const maxAStr = (document.getElementById('filterMaxAmount') && document.getElementById('filterMaxAmount').value.trim()) || '';
+            const minA = minAStr !== '' ? parseFloat(minAStr) : NaN;
+            const maxA = maxAStr !== '' ? parseFloat(maxAStr) : NaN;
 
             const filtered = all.filter(r => {
+                const amt = Number(r.amount) || 0;
+                if (!isNaN(minA) && amt < minA) return false;
+                if (!isNaN(maxA) && amt > maxA) return false;
                 if (d && r.date !== d) return false;
                 if (y !== 'ALL' && !r.date.startsWith(y)) return false;
                 if (m !== 'ALL') {
@@ -2133,11 +2272,17 @@
                 return true;
             });
 
-            // 更新 Hero 总览卡片周期标题标签
+            // 更新 Hero 总览卡片周期标题标签 (反映金额与时光轴)
             const heroPeriodLabel = document.getElementById('heroPeriodLabel');
             const isEn = getCurrentLanguage() === 'en';
             if (heroPeriodLabel) {
-                if (d) {
+                if (!isNaN(minA) && !isNaN(maxA)) {
+                    heroPeriodLabel.innerText = isEn ? `💰 RM ${minA.toFixed(2)} - ${maxA.toFixed(2)}` : `💰 RM ${minA.toFixed(2)} ~ ${maxA.toFixed(2)} 账单`;
+                } else if (!isNaN(minA)) {
+                    heroPeriodLabel.innerText = isEn ? `💰 >= RM ${minA.toFixed(2)}` : `💰 >= RM ${minA.toFixed(2)} 账单`;
+                } else if (!isNaN(maxA)) {
+                    heroPeriodLabel.innerText = isEn ? `💰 <= RM ${maxA.toFixed(2)}` : `💰 <= RM ${maxA.toFixed(2)} 账单`;
+                } else if (d) {
                     heroPeriodLabel.innerText = isEn ? `📅 Spending on ${d}` : `📅 ${d} 消费总览`;
                 } else if (y !== 'ALL' && m !== 'ALL') {
                     heroPeriodLabel.innerText = isEn ? `📅 ${m}/${y} Overview` : `📅 ${y}年${m}月 消费总览`;
@@ -2151,7 +2296,7 @@
                 }
             }
 
-            const isFiltered = (y !== 'ALL' || m !== 'ALL' || c !== 'ALL' || d !== '' || k !== '');
+            const isFiltered = (y !== 'ALL' || m !== 'ALL' || c !== 'ALL' || d !== '' || k !== '' || !isNaN(minA) || !isNaN(maxA));
             renderList(filtered, isFiltered);
         }
 
@@ -2161,6 +2306,8 @@
             if (document.getElementById('filterCategory')) document.getElementById('filterCategory').value = 'ALL';
             if (document.getElementById('filterExactDate')) document.getElementById('filterExactDate').value = '';
             if (document.getElementById('filterKeyword')) document.getElementById('filterKeyword').value = '';
+            if (document.getElementById('filterMinAmount')) document.getElementById('filterMinAmount').value = '';
+            if (document.getElementById('filterMaxAmount')) document.getElementById('filterMaxAmount').value = '';
             updateCategoryChipsUI();
             renderCurrentUser();
             closeFilterDrawer();
@@ -2843,12 +2990,52 @@
         // 意见反馈 (Feedback)
         // ==========================================
         function openFeedbackModal() {
+            renderFeedbackHistoryUI();
             openModal('feedbackModal');
         }
 
         function closeFeedbackModal() {
             closeModal('feedbackModal');
             document.getElementById('fbContent').value = '';
+        }
+
+        // ==========================================
+        // 电脑端服务连接测试 (Ping)
+        // ==========================================
+        async function testBackendConnection() {
+            const input = document.getElementById('backendUrlInput');
+            let url = (input ? input.value.trim() : '') || localStorage.getItem(BACKEND_URL_STORAGE) || '';
+            const isEn = getCurrentLanguage() === 'en';
+
+            if (!url) {
+                alert(isEn ? 'Please enter PC C++ Backend URL first (e.g. http://localhost:9090 or http://PC_IP:9090)' : '请先输入电脑端 C++ 服务地址 (例如: http://localhost:9090 或 http://电脑局域网IP:9090)');
+                return;
+            }
+            if (url.endsWith('/')) url = url.slice(0, -1);
+            const resultEl = document.getElementById('backendPingResult');
+            if (resultEl) {
+                resultEl.style.display = 'block';
+                resultEl.style.color = '#2563eb';
+                resultEl.innerText = isEn ? '⏳ Pinging PC C++ Backend...' : '⏳ 正在向电脑端 C++ 发起 Ping 测试...';
+            }
+
+            try {
+                const resp = await fetch(url + '/api/ping', { method: 'GET' });
+                const data = await resp.json();
+                if (data && data.status === 'ok') {
+                    if (resultEl) {
+                        resultEl.style.color = '#16a34a';
+                        resultEl.innerText = isEn ? '✅ Connected to PC Backend! Feedback will be saved directly into PC feedback/ folder!' : '✅ 成功连通电脑端 C++ 后端！手机反馈将直达电脑本地 feedback/ 文件夹！';
+                    }
+                } else {
+                    throw new Error('Invalid response');
+                }
+            } catch(err) {
+                if (resultEl) {
+                    resultEl.style.color = '#dc2626';
+                    resultEl.innerText = (isEn ? '❌ Connection failed: ' : '❌ 无法连接到电脑: ') + err.message + (isEn ? ' (Ensure ReceiptAssistant.exe is running and on same Wi-Fi)' : ' (请确认电脑运行了 ReceiptAssistant.exe 且手机与电脑在同一 Wi-Fi)');
+                }
+            }
         }
 
         async function submitFeedback() {
@@ -2871,22 +3058,32 @@
                 userAgent: navigator.userAgent
             };
 
-            // 1. 保存在本地
+            // 1. 保存在本机 LocalStorage
             let allFb = [];
             try { allFb = JSON.parse(localStorage.getItem(FEEDBACK_STORAGE)) || []; } catch(e) {}
             allFb.unshift(feedbackItem);
             localStorage.setItem(FEEDBACK_STORAGE, JSON.stringify(allFb));
+            renderFeedbackHistoryUI();
 
-            // 2. 尝试向电脑端后端同步
+            // 2. 尝试向电脑端后端同步 (配置的电脑 IP 或同源)
+            let backendSent = false;
+            let backendUrl = localStorage.getItem(BACKEND_URL_STORAGE) || '';
+            if (backendUrl.endsWith('/')) backendUrl = backendUrl.slice(0, -1);
+            const targetApi = backendUrl ? (backendUrl + '/api/feedback') : '/api/feedback';
+
             try {
-                fetch('/api/feedback', {
+                const resp = await fetch(targetApi, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(feedbackItem)
-                }).catch(() => {});
+                });
+                const resData = await resp.json();
+                if (resData && resData.success) {
+                    backendSent = true;
+                }
             } catch(e) {}
 
-            // 3. Web3Forms 邮件直发
+            // 3. Web3Forms 邮件直发 (如果配置了邮箱或 access key)
             const targetEmail = localStorage.getItem(FEEDBACK_EMAIL_STORAGE) || '';
             if (targetEmail) {
                 try {
@@ -2899,29 +3096,173 @@
                             email: targetEmail.includes('@') ? targetEmail : undefined,
                             from_name: 'Receipt App User',
                             subject: `[Receipt App 反馈] ${type} - ${contact || '用户'}`,
-                            message: `反馈类型: ${type}\n联系方式: ${contact || '未提供'}\n时间: ${feedbackItem.time}\n设备环境: ${navigator.userAgent}\n\n详细内容:\n${content}`
+                            message: `=========================================\n智能收据管家 - 用户意见反馈\n=========================================\n提交时间: ${feedbackItem.time}\n反馈类别: ${type}\n联系方式: ${contact || '未提供'}\n设备环境: ${navigator.userAgent}\n\n详细内容:\n${content}\n=========================================`
                         })
                     }).catch(() => {});
                 } catch(e) {}
             }
 
-            alert(t('alertFbSuccess'));
+            let successMsg = t('alertFbSuccess');
+            if (backendSent) {
+                successMsg += isEn ? "\n(Synced to PC's feedback/ folder with human-readable text report!)" : "\n(已同步存入电脑 feedback/ 文件夹并生成人类语言报告！)";
+            }
+            alert(successMsg);
+            document.getElementById('fbContent').value = '';
             closeFeedbackModal();
         }
 
-        function exportFeedbackData() {
+        // ==========================================
+        // 导出为正常人类自然语言文本清单 (.txt)
+        // ==========================================
+        function exportFeedbackAsText() {
             let allFb = [];
             try { allFb = JSON.parse(localStorage.getItem(FEEDBACK_STORAGE)) || []; } catch(e) {}
             if (allFb.length === 0) {
                 alert(t('alertNoLocalFb'));
                 return;
             }
-            const blob = new Blob([JSON.stringify(allFb, null, 2)], { type: 'application/json' });
+            const isEn = getCurrentLanguage() === 'en';
+            let text = "======================================================================\n";
+            text += isEn ? "               RECEIPT APP - USER FEEDBACK ARCHIVE REPORT\n" : "               智能收据管家 - 用户意见与反馈历史记录清单\n";
+            text += "======================================================================\n";
+            text += (isEn ? "Export Date: " : "导出时间: ") + new Date().toLocaleString() + "\n";
+            text += (isEn ? "Total Records: " : "反馈记录总数: ") + allFb.length + (isEn ? " entries\n\n" : " 条\n\n");
+
+            allFb.forEach((fb, idx) => {
+                text += "----------------------------------------------------------------------\n";
+                text += (isEn ? `【Feedback #${idx + 1}】` : `【反馈记录 #${idx + 1}】`) + "\n";
+                text += (isEn ? "📅 Submitted At: " : "📅 提交时间: ") + (fb.time || 'N/A') + "\n";
+                text += (isEn ? "🏷️ Category:     " : "🏷️ 反馈类别: ") + (fb.type || 'N/A') + "\n";
+                text += (isEn ? "👤 Contact:      " : "👤 联系方式: ") + (fb.contact || 'N/A') + "\n";
+                text += (isEn ? "📱 Device/OS:    " : "📱 客户端环境: ") + (fb.userAgent || 'N/A') + "\n\n";
+                text += (isEn ? "💬 Detailed Content:\n" : "💬 详细反馈内容:\n");
+                text += (fb.content || '') + "\n";
+                text += "----------------------------------------------------------------------\n\n";
+            });
+            text += "======================================================================\n";
+
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'ReceiptApp_Feedback_' + new Date().toISOString().split('T')[0] + '.json';
+            a.download = (isEn ? 'ReceiptApp_Feedback_' : '收据管家_用户反馈报告_') + new Date().toISOString().split('T')[0] + '.txt';
             a.click();
+        }
+
+        // ==========================================
+        // 导出为整齐的 Excel 表格 (.csv, 带 UTF-8 BOM)
+        // ==========================================
+        function exportFeedbackAsCsv() {
+            let allFb = [];
+            try { allFb = JSON.parse(localStorage.getItem(FEEDBACK_STORAGE)) || []; } catch(e) {}
+            if (allFb.length === 0) {
+                alert(t('alertNoLocalFb'));
+                return;
+            }
+            const isEn = getCurrentLanguage() === 'en';
+            const header = isEn 
+                ? ["Index", "Submitted Time", "Feedback Category", "Contact", "Content", "Device Agent"]
+                : ["序号", "提交时间", "反馈类别", "联系方式", "反馈详细内容", "客户端设备"];
+            
+            let csv = "\uFEFF" + header.join(",") + "\n"; // \uFEFF 写入 UTF-8 BOM，防止 Windows Excel 打开乱码
+            allFb.forEach((fb, idx) => {
+                const row = [
+                    idx + 1,
+                    `"${(fb.time || '').replace(/"/g, '""')}"`,
+                    `"${(fb.type || '').replace(/"/g, '""')}"`,
+                    `"${(fb.contact || '').replace(/"/g, '""')}"`,
+                    `"${(fb.content || '').replace(/"/g, '""')}"`,
+                    `"${(fb.userAgent || '').replace(/"/g, '""')}"`
+                ];
+                csv += row.join(",") + "\n";
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (isEn ? 'ReceiptApp_Feedback_' : '收据管家_用户反馈表格_') + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+        }
+
+        // ==========================================
+        // 一键调起系统邮件客户端直发到电脑
+        // ==========================================
+        function openMailtoFeedback() {
+            const type = (document.getElementById('fbType') && document.getElementById('fbType').value) || '普通反馈';
+            const contact = (document.getElementById('fbContact') && document.getElementById('fbContact').value.trim()) || '未提供';
+            const content = (document.getElementById('fbContent') && document.getElementById('fbContent').value.trim()) || '';
+            const isEn = getCurrentLanguage() === 'en';
+
+            if (!content) {
+                alert(t('alertEnterContent'));
+                return;
+            }
+
+            const targetEmail = localStorage.getItem(FEEDBACK_EMAIL_STORAGE) || 'laikhanjuan@gmail.com';
+            const subject = encodeURIComponent(`[收据管家反馈] ${type} - ${contact}`);
+            const body = encodeURIComponent(
+                (isEn ? '【Receipt Butler - User Feedback】\n\n' : '【智能收据管家 - 用户意见反馈】\n\n') +
+                (isEn ? 'Category: ' : '反馈类别: ') + type + '\n' +
+                (isEn ? 'Contact:  ' : '联系方式: ') + contact + '\n' +
+                (isEn ? 'Time:     ' : '提交时间: ') + new Date().toLocaleString() + '\n' +
+                (isEn ? 'Device:   ' : '设备环境: ') + navigator.userAgent + '\n\n' +
+                '-----------------------------------------\n' +
+                (isEn ? 'Content:\n' : '详细内容:\n') + content + '\n' +
+                '-----------------------------------------\n'
+            );
+            window.location.href = `mailto:${targetEmail}?subject=${subject}&body=${body}`;
+        }
+
+        // ==========================================
+        // 本地历史反馈卡片流展开与渲染
+        // ==========================================
+        function toggleFeedbackHistoryView() {
+            const listEl = document.getElementById('feedbackHistoryList');
+            if (!listEl) return;
+            const isShown = listEl.style.display === 'block';
+            listEl.style.display = isShown ? 'none' : 'block';
+            renderFeedbackHistoryUI();
+        }
+
+        function renderFeedbackHistoryUI() {
+            let allFb = [];
+            try { allFb = JSON.parse(localStorage.getItem(FEEDBACK_STORAGE)) || []; } catch(e) {}
+            const countBadge = document.getElementById('fbCountBadge');
+            if (countBadge) countBadge.innerText = allFb.length;
+
+            const listEl = document.getElementById('feedbackHistoryList');
+            if (!listEl) return;
+            const isEn = getCurrentLanguage() === 'en';
+
+            if (allFb.length === 0) {
+                listEl.innerHTML = `<div style="text-align:center; padding:16px; color:var(--text-muted); font-size:12px;">${isEn ? 'No feedback recorded yet' : '暂无已提交的反馈记录'}</div>`;
+                return;
+            }
+
+            listEl.innerHTML = allFb.map((fb, idx) => `
+                <div class="fb-card">
+                    <div class="fb-card-header">
+                        <div>
+                            <span class="fb-badge">${escapeHtml(fb.type || (isEn ? 'General' : '反馈'))}</span>
+                            <span style="font-weight:600; color:var(--slate-navy); margin-left:5px;">${escapeHtml(fb.contact || (isEn ? 'Anonymous' : '匿名'))}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="fb-time">${escapeHtml(fb.time || '')}</span>
+                            <button type="button" onclick="deleteLocalFeedback('${fb.id}')" style="background:none; border:none; color:#ef4444; font-size:11px; cursor:pointer;" title="删除">✕</button>
+                        </div>
+                    </div>
+                    <div class="fb-body">${escapeHtml(fb.content || '')}</div>
+                </div>
+            `).join('');
+        }
+
+        function deleteLocalFeedback(id) {
+            let allFb = [];
+            try { allFb = JSON.parse(localStorage.getItem(FEEDBACK_STORAGE)) || []; } catch(e) {}
+            allFb = allFb.filter(f => f.id !== id);
+            localStorage.setItem(FEEDBACK_STORAGE, JSON.stringify(allFb));
+            renderFeedbackHistoryUI();
         }
 
         // ==========================================
