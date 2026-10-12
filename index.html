@@ -2,13 +2,13 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="theme-color" content="#1e3c72">
+    <meta name="theme-color" content="#F8F9FA">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="icon" type="image/png" href="icon.png">
@@ -16,700 +16,1016 @@
     <title>智能收据管家</title>
     <style>
         :root {
-            --primary: #1e3c72;
-            --primary-light: #2a5298;
-            --accent: #e11d48;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --radius-lg: 20px;
-            --radius-md: 14px;
-            --radius-sm: 8px;
+            /* 弹簧物理运动曲线 (Spring Physics) */
+            --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+
+            /* 设计系统调色板 (Apple HIG & Copilot Money Tokens) */
+            --canvas: #F8F9FA;
+            --card-surface: #FFFFFF;
+            --primary: #2563EB;
+            --primary-hover: #1D4ED8;
+            --primary-light: #EFF6FF;
+            --slate-navy: #0F172A;
+            --accent: #E11D48;
+            --text-main: #0F172A;
+            --text-muted: #64748B;
+            --text-light: #94A3B8;
+            --border-color: rgba(0, 0, 0, 0.06);
+            --border-focus: #2563EB;
+            --radius-card: 24px;
+            --radius-pill: 40px;
+            --radius-md: 16px;
+            --radius-sm: 10px;
+            --card-shadow: 0 10px 30px -6px rgba(0, 0, 0, 0.04);
+            --dock-shadow: 0 16px 40px -4px rgba(15, 23, 42, 0.15), 0 4px 16px rgba(0, 0, 0, 0.04);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text-main); padding-bottom: 90px; }
-
-        /* 顶部导航 */
-        header { 
-            background: linear-gradient(135deg, var(--primary), var(--primary-light)); 
-            color: white; 
-            padding: 22px 18px 18px; 
-            border-radius: 0 0 28px 28px; 
-            box-shadow: 0 8px 20px rgba(30, 60, 114, 0.18); 
-        }
-        .header-top { display: flex; justify-content: space-between; align-items: center; }
-        .logo-area { display: flex; align-items: center; gap: 10px; }
-        .logo-img { width: 34px; height: 34px; border-radius: 8px; }
-        h1 { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
-
-        .header-actions { display: flex; gap: 8px; }
-        .icon-btn { 
-            background: rgba(255, 255, 255, 0.2); 
-            border: none; 
-            color: white; 
-            padding: 6px 11px; 
-            border-radius: 20px; 
-            font-size: 12px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            backdrop-filter: blur(8px);
-            transition: 0.15s;
-        }
-        .icon-btn:active { background: rgba(255, 255, 255, 0.35); transform: scale(0.96); }
-
-        /* 用户与模式栏 */
-        .user-switch-bar { 
-            background: rgba(255, 255, 255, 0.15); 
-            border-radius: 14px; 
-            padding: 9px 12px; 
-            margin-top: 14px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            backdrop-filter: blur(10px);
-        }
-        .user-select { 
-            background: white; 
-            border: none; 
-            border-radius: 8px; 
-            padding: 6px 10px; 
-            font-size: 13px; 
-            font-weight: 700; 
-            color: var(--primary); 
-            outline: none; 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .container { padding: 16px; max-width: 600px; margin: 0 auto; }
-        .card { 
-            background: var(--card-bg); 
-            border-radius: var(--radius-lg); 
-            padding: 18px; 
-            margin-bottom: 15px; 
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03); 
-            border: 1px solid var(--border-color);
+        body {
+            background: var(--canvas);
+            color: var(--text-main);
+            padding-bottom: 115px; /* 为底部浮动导航岛留出空间 */
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* 模式指示徽章 */
-        .engine-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 9px;
-            border-radius: 12px;
-            background: #eff6ff;
-            color: #1d4ed8;
-            margin-bottom: 12px;
+        /* 触觉按压微交互 (Tactile Feedback) */
+        button, .btn, .icon-circle-btn, .cat-chip, .receipt-item, .dock-shutter-btn, .dock-btn, .user-capsule, .ai-chip {
+            transition: transform 0.2s var(--spring-bounce), box-shadow 0.2s ease, background 0.15s ease, opacity 0.15s ease;
+        }
+        button:active, .btn:active, .icon-circle-btn:active, .cat-chip:active, .receipt-item:active, .dock-shutter-btn:active, .dock-btn:active, .user-capsule:active, .ai-chip:active {
+            transform: scale(0.95);
         }
 
-        /* 拍照 & 上传区域 */
-        .upload-area { 
-            border: 2px dashed #93c5fd; 
-            border-radius: 16px; 
-            padding: 24px 16px; 
-            text-align: center; 
-            cursor: pointer; 
-            background: #f0f7ff; 
-            transition: 0.2s; 
-        }
-        .upload-area:active { background: #dbeafe; }
-        .upload-icon { font-size: 40px; margin-bottom: 6px; }
-
-        /* 按钮与表单 */
-        .btn { 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center; 
-            width: 100%; 
-            padding: 13px; 
-            font-size: 15px; 
-            font-weight: 700; 
-            border: none; 
-            border-radius: var(--radius-md); 
-            cursor: pointer; 
-            transition: 0.15s; 
-        }
-        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; box-shadow: 0 4px 12px rgba(30,60,114,0.2); }
-        .btn-primary:active { transform: scale(0.98); }
-        .btn-secondary { background: #e2e8f0; color: #475569; }
-
-        input[type="file"] { display: none; }
-        .loading { display: none; text-align: center; color: var(--primary); font-size: 13.5px; font-weight: 700; padding: 10px; margin-top: 10px; }
-
-        /* 筛选器 */
-        .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-        .cat-select { 
-            width: 100%; 
-            padding: 9px 12px; 
-            border-radius: 10px; 
-            border: 1.5px solid var(--border-color); 
-            font-size: 13px; 
-            background: #f8fafc; 
-            color: var(--text-main); 
-            outline: none; 
-        }
-        .cat-select:focus { border-color: var(--primary-light); }
-
-        .search-input {
-            width: 100%;
-            padding: 10px 14px;
-            border-radius: 12px;
-            border: 1.5px solid var(--border-color);
-            font-size: 14px;
-            outline: none;
-            background: #ffffff;
-            transition: 0.2s;
-        }
-        .search-input:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1); }
-
-        /* 英雄总览支出卡片 (Copilot Money 风格) */
-        .hero-spending-card {
-            background: linear-gradient(135deg, #1e293b, #0f172a);
-            color: #ffffff;
-            border-radius: var(--radius-lg);
-            padding: 18px 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
-            position: relative;
-            overflow: hidden;
-        }
-        .hero-spending-card::after {
-            content: '';
-            position: absolute;
-            top: -40px; right: -40px;
-            width: 140px; height: 140px;
-            background: radial-gradient(circle, rgba(56, 189, 248, 0.2), transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        .hero-spending-header {
+        /* 1. 磨砂玻璃粘性顶部导航 (Frosted Sticky Header) */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            background: rgba(248, 249, 250, 0.85);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            padding: 12px 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 6px;
         }
-        .hero-spending-label {
-            font-size: 12px;
-            font-weight: 700;
-            color: #94a3b8;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-        .hero-receipt-count {
-            font-size: 11px;
-            font-weight: 700;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 3px 9px;
-            border-radius: 20px;
-            color: #e2e8f0;
-            backdrop-filter: blur(4px);
-        }
-        .hero-spending-amount {
-            font-size: 28px;
-            font-weight: 900;
-            color: #ffffff;
-            letter-spacing: -0.5px;
-            margin-bottom: 14px;
-        }
-        .hero-metrics-row {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr auto 1.2fr;
-            align-items: center;
-            padding-top: 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.12);
-        }
-        .hero-metric-item { display: flex; flex-direction: column; }
-        .hero-metric-sub { font-size: 10.5px; color: #94a3b8; margin-bottom: 2px; }
-        .hero-metric-val { font-size: 13px; font-weight: 800; color: #f8fafc; }
-        .hero-metric-divider { width: 1px; height: 24px; background: rgba(255, 255, 255, 0.12); }
-
-        /* AI 智能问账卡片与快捷标签 */
-        .ai-chips-scroll {
+        .header-left {
             display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding: 10px 0 2px;
-            scrollbar-width: none;
-            -webkit-overflow-scrolling: touch;
-        }
-        .ai-chips-scroll::-webkit-scrollbar { display: none; }
-        .ai-chip {
-            flex-shrink: 0;
-            background: #f1f5f9;
-            color: #334155;
-            padding: 7px 13px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            border: 1px solid #e2e8f0;
-            cursor: pointer;
-            transition: 0.15s;
-            user-select: none;
-            display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 10px;
         }
-        .ai-chip:active {
-            background: #e0f2fe;
-            color: #0369a1;
-            border-color: #bae6fd;
-            transform: scale(0.96);
-        }
-
-        /* 呼吸加载动效 */
-        .ai-loading-container {
-            margin-top: 14px;
-            background: #f8fafc;
-            border: 1px dashed #cbd5e1;
-            border-radius: 14px;
-            padding: 16px;
-            text-align: center;
-        }
-        .ai-shimmer-bar {
-            height: 4px;
-            width: 100%;
-            background: linear-gradient(90deg, #e2e8f0 25%, #38bdf8 50%, #e2e8f0 75%);
-            background-size: 200% 100%;
-            border-radius: 2px;
-            animation: shimmer 1.5s infinite;
-            margin-bottom: 10px;
-        }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .ai-loading-text {
-            font-size: 13px;
-            font-weight: 700;
-            color: #0284c7;
+        .logo-mark {
+            width: 32px;
+            height: 32px;
+            border-radius: 9px;
             display: flex;
             align-items: center;
             justify-content: center;
+            background: linear-gradient(135deg, #2563EB, #1D4ED8);
+            color: white;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+        }
+        .header-title-group h1 {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            color: var(--slate-navy);
+        }
+
+        /* 账本胶囊 (User Capsule) */
+        .user-capsule {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #FFFFFF;
+            border: 1px solid rgba(0, 0, 0, 0.07);
+            border-radius: var(--radius-pill);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            cursor: pointer;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--slate-navy);
+        }
+        .user-avatar-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #10B981;
+        }
+        .user-select-hidden {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
             gap: 8px;
         }
-        .ai-pulse-dot {
-            width: 8px; height: 8px;
-            background: #0284c7;
+        .icon-circle-btn {
+            background: #FFFFFF;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            color: var(--slate-navy);
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            animation: pulseDot 1s infinite alternate;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
         }
-        @keyframes pulseDot { from { opacity: 0.3; transform: scale(0.8); } to { opacity: 1; transform: scale(1.2); } }
+        .icon-circle-btn.lang-pill {
+            width: auto;
+            padding: 0 11px;
+            border-radius: var(--radius-pill);
+            font-size: 12px;
+        }
 
-        /* 结构化 AI 回答卡片 (视觉层级) */
-        .ai-answer-card {
-            margin-top: 14px;
-            background: #ffffff;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-            display: none;
-            animation: modalIn 0.2s ease-out;
+        /* 页面主体容器 */
+        .container {
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
         }
-        .ai-answer-header {
-            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-            padding: 10px 14px;
+
+        /* 2. 英雄总览支出卡片 (Apple Wallet & Copilot Money 风格) */
+        .hero-wallet-card {
+            background: var(--card-surface);
+            border-radius: var(--radius-card);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 22px 20px 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            position: relative;
+        }
+        .hero-top-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 8px;
         }
-        .ai-bot-badge {
-            font-size: 12px;
-            font-weight: 800;
-            color: var(--primary);
+        .hero-meta-left {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
         }
-        .ai-actions-bar { display: flex; gap: 6px; }
-        .ai-mini-btn {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 3px 8px;
+        .hero-label {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 0.2px;
+        }
+        .hero-count-badge {
             font-size: 11px;
             font-weight: 700;
-            color: #475569;
-            cursor: pointer;
-            transition: 0.15s;
-        }
-        .ai-mini-btn:active { background: #f1f5f9; transform: scale(0.96); }
-
-        .ai-answer-body {
-            padding: 16px 14px;
-            font-size: 14px;
-            line-height: 1.65;
-            color: #1e293b;
-        }
-        .ai-section-title {
-            font-size: 14.5px;
-            font-weight: 800;
+            padding: 3px 9px;
+            background: var(--primary-light);
             color: var(--primary);
-            margin: 14px 0 8px;
-            padding-left: 8px;
-            border-left: 3.5px solid var(--primary-light);
-            display: flex;
+            border-radius: var(--radius-pill);
+        }
+        .engine-indicator-pill {
+            display: inline-flex;
             align-items: center;
             gap: 5px;
+            font-size: 11.5px;
+            font-weight: 700;
+            padding: 4px 10px;
+            background: #F1F5F9;
+            color: #334155;
+            border-radius: var(--radius-pill);
+            cursor: pointer;
+            border: 1px solid rgba(0, 0, 0, 0.04);
         }
-        .ai-section-title:first-child { margin-top: 0; }
-        .ai-para { margin-bottom: 10px; line-height: 1.65; }
-        .ai-rm-badge {
-            display: inline-block;
-            background: #fef2f2;
-            color: #e11d48;
-            font-weight: 800;
-            padding: 1px 7px;
-            border-radius: 6px;
-            border: 1px solid #fecdd3;
-            font-size: 13.5px;
-            margin: 0 2px;
-        }
-        .ai-list-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-            align-items: flex-start;
-            background: #f8fafc;
-            padding: 8px 10px;
-            border-radius: 8px;
-            border: 1px solid #f1f5f9;
-        }
-        .ai-bullet { color: var(--primary-light); font-weight: 900; line-height: 1.4; }
-        .ai-row-text { flex: 1; font-size: 13.5px; line-height: 1.5; }
-        .ai-tip-box {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 10px;
-            padding: 10px 12px;
-            margin-top: 12px;
-            font-size: 13px;
-            color: #1e40af;
-            display: flex;
-            gap: 8px;
-            align-items: flex-start;
-            line-height: 1.5;
-        }
-        .ai-bold { color: #0f172a; font-weight: 800; }
 
-        /* 收据卡片 (带语义分类色与头像) */
-        .receipt-item { 
-            background: #ffffff; 
-            margin-bottom: 12px; 
-            border-radius: 16px; 
-            padding: 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03); 
-            border: 1px solid var(--border-color);
-            border-left: 5px solid var(--primary-light);
-            transition: 0.15s; 
+        .hero-amount-display {
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: -1.2px;
+            color: var(--slate-navy);
+            margin: 6px 0 18px;
+            line-height: 1.1;
         }
-        .receipt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .merchant-area { display: flex; align-items: center; gap: 8px; }
-        .merchant-avatar { 
-            width: 32px; height: 32px; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 15px; 
-            flex-shrink: 0;
-        }
-        .merchant { font-weight: 800; font-size: 16.5px; color: var(--text-main); }
-        .amount { color: #0f172a; font-weight: 900; font-size: 19px; }
-        
-        .receipt-meta-row {
-            display: flex;
-            align-items: center;
+
+        .hero-metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.2fr;
             gap: 8px;
-            margin-bottom: 8px;
-            font-size: 12px;
+        }
+        .metric-pill {
+            background: #F8FAFC;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            border-radius: 14px;
+            padding: 8px 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .metric-sub {
+            font-size: 10.5px;
+            font-weight: 700;
             color: var(--text-muted);
         }
-        .cat-pill {
+        .metric-val {
+            font-size: 13.5px;
+            font-weight: 800;
+            color: var(--slate-navy);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 快捷辅助动作条 */
+        .quick-actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 4px;
+            margin-bottom: 14px;
+        }
+        .subtle-action-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 700;
+            padding: 4px 6px;
         }
-        .receipt-note-box {
-            background: #f8fafc;
-            border-radius: 8px;
-            padding: 7px 10px;
-            font-size: 12.5px;
-            color: #475569;
+        .subtle-action-btn:hover {
+            color: var(--primary-hover);
+        }
+
+        /* 3. 聚合搜索与分段分类筛选 (Consolidated Search & Filter) */
+        .filter-section {
+            margin-bottom: 18px;
+        }
+        .search-bar-row {
+            display: flex;
+            gap: 8px;
             margin-bottom: 10px;
-            border-left: 3px solid #cbd5e1;
-            line-height: 1.4;
         }
-        
-        .receipt-photo-thumb {
-            width: 54px;
-            height: 54px;
-            object-fit: cover;
-            border-radius: 8px;
+        .search-pill {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .search-pill svg {
+            position: absolute;
+            left: 14px;
+            pointer-events: none;
+        }
+        .search-input-sleek {
+            width: 100%;
+            padding: 10px 14px 10px 38px;
+            background: #FFFFFF;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: var(--radius-pill);
+            font-size: 13.5px;
+            color: var(--text-main);
+            outline: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            transition: border 0.15s, box-shadow 0.15s;
+        }
+        .search-input-sleek:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+        .filter-more-btn {
+            background: #FFFFFF;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            color: var(--slate-navy);
+            padding: 0 14px;
+            border-radius: var(--radius-pill);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12.5px;
+            font-weight: 700;
             cursor: pointer;
-            border: 1.5px solid #e2e8f0;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
         }
 
-        .actions { 
-            display: flex; 
-            gap: 8px; 
-            align-items: center; 
-            justify-content: space-between; 
-            padding-top: 10px; 
-            border-top: 1px dashed var(--border-color); 
+        /* 水平滚动分类胶囊条 */
+        .cat-chips-scroll {
+            display: flex;
+            gap: 7px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            padding: 2px 0 4px;
         }
-        .btn-edit { background: #e0f2fe; color: #0284c7; border: none; padding: 6px 13px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 700; }
-        .btn-del { background: #fee2e2; color: #dc2626; border: none; padding: 6px 13px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 700; }
+        .cat-chips-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        .cat-chip {
+            background: #FFFFFF;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            color: var(--text-muted);
+            padding: 7px 14px;
+            border-radius: var(--radius-pill);
+            font-size: 12.5px;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.015);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .cat-chip.active {
+            background: var(--primary);
+            color: #FFFFFF;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
 
-        /* 空状态卡片 */
+        /* 4. 账单明细流 (Transactions Stream) */
+        .transactions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 0 4px;
+        }
+        .transactions-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--slate-navy);
+            letter-spacing: -0.2px;
+        }
+        .transactions-count-tag {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .receipt-item {
+            background: var(--card-surface);
+            border-radius: 18px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .receipt-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            flex: 1;
+        }
+        .category-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 19px;
+            flex-shrink: 0;
+        }
+        .receipt-details {
+            min-width: 0;
+            flex: 1;
+        }
+        .merchant-name {
+            font-size: 14.5px;
+            font-weight: 800;
+            color: var(--slate-navy);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 3px;
+        }
+        .receipt-subline {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11.5px;
+            color: var(--text-muted);
+        }
+        .receipt-note-badge {
+            background: #F1F5F9;
+            color: #475569;
+            padding: 1px 6px;
+            border-radius: 6px;
+            max-width: 130px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 11px;
+        }
+
+        .receipt-right {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .receipt-amount-text {
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: -0.4px;
+            color: var(--slate-navy);
+        }
+        .receipt-actions-mini {
+            display: flex;
+            gap: 6px;
+        }
+        .action-icon-btn {
+            background: #F1F5F9;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            cursor: pointer;
+            color: #475569;
+        }
+        .action-icon-btn.delete:hover {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        /* 空状态 */
         .empty-state {
             text-align: center;
-            padding: 36px 16px;
-            color: #94a3b8;
+            padding: 42px 18px;
+            background: var(--card-surface);
+            border-radius: var(--radius-card);
+            border: 1px dashed rgba(0, 0, 0, 0.08);
+            margin-top: 10px;
         }
-        .empty-icon { font-size: 44px; margin-bottom: 8px; }
-        .empty-title { font-size: 15px; font-weight: 800; color: #475569; margin-bottom: 4px; }
-        .empty-sub { font-size: 12px; color: #94a3b8; }
+        .empty-icon {
+            font-size: 42px;
+            margin-bottom: 8px;
+        }
+        .empty-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--slate-navy);
+            margin-bottom: 4px;
+        }
+        .empty-sub {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
 
-        /* 模态弹窗遮罩层 (全屏固定居中浮动 & 高级磨砂毛玻璃) */
+        /* 5. 底部悬浮岛导航 (Floating Island Dock) */
+        .island-dock {
+            position: fixed;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 900;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 12px;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: var(--radius-pill);
+            box-shadow: var(--dock-shadow);
+            max-width: 92vw;
+        }
+        .dock-btn {
+            background: transparent;
+            border: none;
+            color: var(--slate-navy);
+            padding: 8px 12px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .dock-btn svg {
+            color: var(--text-muted);
+        }
+        .dock-shutter-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: #FFFFFF;
+            border: none;
+            padding: 10px 18px;
+            border-radius: var(--radius-pill);
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 13.5px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+        }
+        .dock-shutter-btn svg {
+            color: #FFFFFF;
+        }
+
+        /* 6. 模态抽屉底板 (BottomSheets & Drawers) */
         .modal-overlay {
-            display: none;
             position: fixed;
             top: 0;
             left: 0;
+            right: 0;
+            bottom: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(15, 23, 42, 0.65);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            z-index: 99999;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            z-index: 1000;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s var(--spring-smooth);
+        }
+        .modal-overlay.active {
+            display: flex !important;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-box {
+            background: #FFFFFF;
+            width: 100%;
+            max-width: 600px;
+            max-height: 86vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 28px 28px 0 0;
+            padding: 10px 20px 36px;
+            box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(100%);
+            transition: transform 0.35s var(--spring-smooth);
+            box-sizing: border-box;
+        }
+        .modal-overlay.active .modal-box {
+            transform: translateY(0);
+        }
+
+        /* iOS 风格顶部抓手药丸条 (Drag Indicator Pill) */
+        .drawer-drag-pill {
+            width: 38px;
+            height: 4px;
+            background: #CBD5E1;
+            border-radius: 2px;
+            margin: 6px auto 16px;
+            flex-shrink: 0;
+        }
+
+        .drawer-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .drawer-title {
+            font-size: 17.5px;
+            font-weight: 800;
+            color: var(--slate-navy);
+            letter-spacing: -0.3px;
+        }
+        .drawer-close-btn {
+            background: #F1F5F9;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
             align-items: center;
             justify-content: center;
-            padding: 18px;
-            box-sizing: border-box;
+            font-size: 14px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: 700;
         }
 
-        /* 模态弹窗内容卡片 */
-        .modal-box {
-            background: #ffffff;
-            width: 100%;
-            max-width: 480px;
-            max-height: 88vh;
-            overflow-y: auto;
-            border-radius: 20px;
-            padding: 24px 20px;
-            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
-            animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
-            box-sizing: border-box;
-            border: 1px solid rgba(255, 255, 255, 0.8);
-        }
-
-        @keyframes modalIn {
-            from { opacity: 0; transform: scale(0.92) translateY(16px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        /* 表单控件美化 */
+        /* 表单控件体系 */
         .form-group {
             margin-bottom: 14px;
             display: flex;
             flex-direction: column;
             gap: 6px;
-            text-align: left;
         }
         .form-group label {
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: 700;
             color: #334155;
         }
         .form-control {
             width: 100%;
-            padding: 10px 14px;
+            padding: 11px 14px;
             border-radius: 12px;
             border: 1.5px solid var(--border-color);
             font-size: 14px;
             color: var(--text-main);
-            background: #ffffff;
-            box-sizing: border-box;
+            background: #FFFFFF;
             outline: none;
             transition: 0.15s;
-            font-family: inherit;
         }
         .form-control:focus {
-            border-color: var(--primary-light);
-            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.12);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
         textarea.form-control {
             resize: vertical;
         }
+
+        /* 按钮通用 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 13px;
+            font-size: 14.5px;
+            font-weight: 700;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+        }
+        .btn-secondary {
+            background: #F1F5F9;
+            color: #475569;
+        }
+
+        /* AI 抽屉专属样式 */
+        .ai-input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .ai-prompt-input {
+            flex: 1;
+            padding: 11px 14px;
+            border-radius: var(--radius-pill);
+            border: 1.5px solid var(--border-color);
+            font-size: 13.5px;
+            outline: none;
+        }
+        .ai-prompt-input:focus {
+            border-color: var(--primary);
+        }
+        .ai-ask-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0 18px;
+            border-radius: var(--radius-pill);
+            font-size: 13.5px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .ai-chips-scroll {
+            display: flex;
+            gap: 7px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+        }
+        .ai-chips-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        .ai-chip {
+            background: #F8FAFC;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            color: #334155;
+            padding: 6px 12px;
+            border-radius: var(--radius-pill);
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        /* 呼吸光效加载状态 (AI Shimmer Effect) */
+        .ai-loading-container {
+            padding: 16px;
+            background: #F8FAFC;
+            border-radius: 14px;
+            border: 1px solid rgba(0,0,0,0.04);
+            margin-bottom: 12px;
+        }
+        .ai-shimmer-bar {
+            height: 4px;
+            width: 100%;
+            background: linear-gradient(90deg, #E2E8F0 0%, #93C5FD 50%, #E2E8F0 100%);
+            background-size: 200% 100%;
+            border-radius: 2px;
+            animation: shimmerMove 1.5s infinite;
+            margin-bottom: 10px;
+        }
+        @keyframes shimmerMove {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .ai-loading-text {
+            font-size: 12.5px;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+        .ai-pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: pulseDot 1s infinite alternate;
+        }
+        @keyframes pulseDot {
+            from { transform: scale(0.8); opacity: 0.5; }
+            to { transform: scale(1.3); opacity: 1; }
+        }
+
+        /* AI 结构化回答排版卡片 */
+        .ai-answer-card {
+            background: #F8FAFC;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 18px;
+            padding: 16px;
+            margin-top: 10px;
+        }
+        .ai-answer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            margin-bottom: 12px;
+        }
+        .ai-bot-badge {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .ai-actions-bar {
+            display: flex;
+            gap: 6px;
+        }
+        .ai-mini-btn {
+            background: #FFFFFF;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 4px 9px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .ai-answer-body {
+            font-size: 13.5px;
+            line-height: 1.7;
+            color: #1E293B;
+        }
+        .ai-section-title {
+            font-size: 14.5px;
+            font-weight: 800;
+            color: var(--slate-navy);
+            margin: 12px 0 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ai-tip-box {
+            background: #EFF6FF;
+            border-left: 3px solid var(--primary);
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 12.5px;
+            color: #1E40AF;
+            display: flex;
+            gap: 8px;
+            line-height: 1.5;
+        }
+        .ai-list-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 6px;
+            line-height: 1.55;
+        }
+        .ai-bullet {
+            color: var(--primary);
+            font-weight: 800;
+        }
+        .ai-rm-badge {
+            display: inline-block;
+            background: #EFF6FF;
+            color: var(--primary);
+            font-weight: 800;
+            padding: 0 5px;
+            border-radius: 5px;
+        }
+
+        /* 隐藏的真实文件控件与兼容控件 */
+        input[type="file"] { display: none; }
+        .loading { display: none; text-align: center; color: var(--primary); font-size: 13.5px; font-weight: 700; padding: 10px; margin-top: 10px; }
+
+        /* 隐藏的兼容元素 (确保原有 JS 引用不抛异常) */
+        #filterCategoryHidden, #uploadAreaTitle, #uploadSubtext, #manualNewBtnOld, #switchEngineLink {
+            display: none;
+        }
     </style>
 </head>
 <body>
+
+    <!-- 1. 磨砂玻璃粘性顶部导航 -->
     <header>
-        <div class="header-top">
-            <div class="logo-area">
-                <img src="icon.svg" class="logo-img" alt="Logo">
-                <h1 id="appTitleHeader">智能收据管家</h1>
+        <div class="header-left">
+            <div class="logo-mark">🧾</div>
+            <!-- 账本切换胶囊 -->
+            <div class="user-capsule" title="点击切换账本">
+                <div class="user-avatar-dot"></div>
+                <span id="currentUserNameLabel">默认用户</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                <!-- 真实 select 浮于其上保持原生操作体验与代码逻辑兼容 -->
+                <select id="userSelect" class="user-select-hidden" onchange="onUserChange(this.value)"></select>
             </div>
-            <div class="header-actions">
-                <button class="icon-btn" id="langToggleBtn" onclick="toggleLanguage()">🌐 EN</button>
-                <button class="icon-btn" id="feedbackNavBtn" onclick="openFeedbackModal()">💬 反馈</button>
-                <button class="icon-btn" id="settingsNavBtn" onclick="openSettingsModal()">⚙️ 设置</button>
-            </div>
+            <!-- 新建账本 -->
+            <button class="icon-circle-btn" id="newBookBtn" onclick="addUser()" title="新建账本">+</button>
         </div>
 
-        <div class="user-switch-bar">
-            <span style="font-size:13px; font-weight:700;" id="userSwitchLabel">👤 当前账本:</span>
-            <select id="userSelect" class="user-select" onchange="onUserChange(this.value)"></select>
-            <button class="icon-btn" style="background:rgba(255,255,255,0.25);" id="newBookBtn" onclick="addUser()">+ 新账本</button>
+        <div class="header-right">
+            <!-- 中英文双语切换 -->
+            <button class="icon-circle-btn lang-pill" id="langToggleBtn" onclick="toggleLanguage()">🌐 EN</button>
+            <!-- 意见反馈 -->
+            <button class="icon-circle-btn" id="feedbackNavBtn" onclick="openFeedbackModal()" title="反馈">💬</button>
+            <!-- 设置 -->
+            <button class="icon-circle-btn" id="settingsNavBtn" onclick="openSettingsModal()" title="设置">⚙️</button>
         </div>
     </header>
 
     <div class="container">
-        <!-- 拍照 / 记账卡片 -->
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span class="engine-badge" id="currentEngineBadge">🤖 当前引擎: Gemini</span>
-                <span style="font-size:12px; color:var(--text-muted); cursor:pointer;" id="switchEngineLink" onclick="openSettingsModal()">切换引擎 ➔</span>
-            </div>
 
-            <label for="cameraInput">
-                <div class="upload-area">
-                    <div class="upload-icon">📸</div>
-                    <b id="uploadAreaTitle">点击拍照或选择小票</b>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;" id="uploadSubtext">支持智能识别或纯手动存图记账</p>
+        <!-- 2. 英雄总览支出卡片 (Copilot Money 极简风) -->
+        <div class="hero-wallet-card">
+            <div class="hero-top-row">
+                <div class="hero-meta-left">
+                    <span class="hero-label" id="heroPeriodLabel">📊 支出总览</span>
+                    <span class="hero-count-badge" id="totalCount">0 笔支出</span>
                 </div>
-            </label>
-            <input type="file" id="cameraInput" accept="image/*" capture="environment">
-
-            <!-- 纯手动无图快速记账入口 -->
-            <button class="btn" style="background:#f1f5f9; color:#475569; margin-top:10px; font-size:13px; padding:10px;" id="manualNewBtn" onclick="openManualNewReceipt()">✍️ 不拍照，直接手动输入记账</button>
-
-            <div id="uploadLoading" class="loading" style="display:none;">⏳ 正在处理收据中，请稍候...</div>
-        </div>
-
-        <!-- 专属 AI 查账卡片 (Copilot Money 交互设计风格) -->
-        <div class="card" id="aiQueryCard">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h3 style="font-size: 15.5px; font-weight:800; display:flex; align-items:center; gap:6px; color:var(--primary);" id="aiCardTitle">
-                    <span>🤖</span> <span id="aiCardTitleText">智能财务问账顾问</span>
-                </h3>
-                <span style="font-size:11px; font-weight:700; color:var(--primary-light); background:#eff6ff; padding:3px 9px; border-radius:12px;" id="aiCardBadge">支持问明细 · 查总额</span>
-            </div>
-
-            <div style="display:flex; gap:8px;">
-                <input type="text" id="aiQuery" class="search-input" placeholder="例如: 我买数码一共花了多少钱？" onkeydown="if(event.key==='Enter') askAi()">
-                <button class="btn btn-primary" style="width: auto; padding: 10px 18px; white-space:nowrap;" id="aiAskBtn" onclick="askAi()">提问</button>
-            </div>
-
-            <!-- 猜你想问快捷胶囊（Suggested Quick Chips） -->
-            <div class="ai-chips-scroll" id="aiChipsContainer">
-                <button type="button" class="ai-chip" onclick="quickAsk('统计我最近的所有消费明细与总支出')">📊 消费总支出</button>
-                <button type="button" class="ai-chip" onclick="quickAsk('统计工作器材与备件(Spare Parts)的支出总额与明细')">🛠️ 器材备件对账</button>
-                <button type="button" class="ai-chip" onclick="quickAsk('我最近在超市和餐饮分别买了什么东西？')">🛒 买了什么商品</button>
-                <button type="button" class="ai-chip" onclick="quickAsk('哪一笔消费金额最高？买了什么？')">🔝 哪笔消费最贵</button>
-                <button type="button" class="ai-chip" onclick="quickAsk('餐饮美食一共消费了多少令吉？')">🍔 餐饮开销统计</button>
-                <button type="button" class="ai-chip" onclick="quickAsk('帮我分析目前的消费习惯并给出省钱建议')">💡 财务省钱建议</button>
-            </div>
-
-            <!-- 呼吸光效加载状态 -->
-            <div id="aiLoading" class="ai-loading-container" style="display:none;">
-                <div class="ai-shimmer-bar"></div>
-                <div class="ai-loading-text">
-                    <span class="ai-pulse-dot"></span> <span id="aiLoadingText">财务 AI 顾问正在翻阅账本、计算梳理中...</span>
+                <!-- 引擎微徽章 -->
+                <div class="engine-indicator-pill" id="currentEngineBadge" onclick="openSettingsModal()">
+                    🤖 Gemini
                 </div>
             </div>
 
-            <!-- 结构化排版回答卡片 -->
-            <div id="aiAnswerCard" class="ai-answer-card">
-                <div class="ai-answer-header">
-                    <div class="ai-bot-badge">
-                        <span id="aiAnswerBotName">✨ 智能财务顾问分析</span>
-                    </div>
-                    <div class="ai-actions-bar">
-                        <button type="button" class="ai-mini-btn" id="aiCopyBtn" onclick="copyAiAnswer()">📋 复制</button>
-                        <button type="button" class="ai-mini-btn" id="aiCloseBtn" onclick="closeAiAnswer()">✕ 收起</button>
-                    </div>
+            <!-- 主金额 -->
+            <div class="hero-amount-display" id="totalAmount">RM 0.00</div>
+
+            <!-- 核心三指标 -->
+            <div class="hero-metrics-grid">
+                <div class="metric-pill">
+                    <span class="metric-sub" id="heroMaxSub">单笔最高</span>
+                    <span class="metric-val" id="heroMaxAmount">RM 0.00</span>
                 </div>
-                <div id="aiAnswerBody" class="ai-answer-body"></div>
+                <div class="metric-pill">
+                    <span class="metric-sub" id="heroAvgSub">笔均开销</span>
+                    <span class="metric-val" id="heroAvgAmount">RM 0.00</span>
+                </div>
+                <div class="metric-pill">
+                    <span class="metric-sub" id="heroTopSub">主要支出类别</span>
+                    <span class="metric-val" id="heroTopCategory">无</span>
+                </div>
             </div>
         </div>
 
-        <!-- 多维时间/分类/搜索筛选器 -->
-        <div class="card" style="padding: 16px;">
-            <div style="font-size: 13px; font-weight: 800; color: var(--primary); margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
-                <span id="filterHeaderTitle">🔎 多维时光轴筛选 (年/月/日/类别)</span>
-                <button id="filterResetBtn" onclick="resetFilters()" style="background:none; border:none; color:var(--accent); font-size:12px; cursor:pointer; font-weight:700;">重置条件</button>
+        <!-- 快捷小工具行 -->
+        <div class="quick-actions-bar">
+            <button type="button" class="subtle-action-btn" id="manualNewBtn" onclick="openManualNewReceipt()">
+                ✍️ <span id="manualNewBtnText">无图手动记账</span>
+            </button>
+            <div style="display:flex; gap:10px;">
+                <button type="button" class="subtle-action-btn" id="exportBackupBtn" onclick="exportUserData()">
+                    💾 <span id="exportBackupBtnText">导出备份</span>
+                </button>
+                <button type="button" class="subtle-action-btn" id="refreshListBtn" onclick="renderCurrentUser()">
+                    🔄 <span id="refreshListBtnText">刷新</span>
+                </button>
             </div>
-            <div class="filter-grid">
-                <select id="filterYear" class="cat-select" onchange="applyFilters()">
-                    <option value="ALL">📅 所有年份</option>
-                </select>
-                <select id="filterMonth" class="cat-select" onchange="applyFilters()">
-                    <option value="ALL">📆 所有月份</option>
-                </select>
-            </div>
-            <div class="filter-grid">
-                <select id="filterCategory" class="cat-select" onchange="applyFilters()">
-                    <option value="ALL">🏷️ 所有消费类别</option>
-                </select>
-                <input type="date" id="filterExactDate" class="cat-select" onchange="applyFilters()" title="特定某天">
-            </div>
-            <input type="text" id="filterKeyword" class="search-input" placeholder="🔍 快速搜索商家名或商品..." oninput="applyFilters()">
         </div>
 
-        <!-- 收据列表 -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <h3 style="font-size: 16px; font-weight:800;" id="listTitle">📋 收据清单</h3>
-                <div style="display:flex; gap:8px;">
-                    <button id="exportBackupBtn" onclick="exportUserData()" style="background:none; border:none; color:var(--primary-light); font-size:12px; cursor:pointer; font-weight:600;">💾 导出备份</button>
-                    <button id="refreshListBtn" onclick="renderCurrentUser()" style="background:none; border:none; color:var(--primary-light); font-size:12px; cursor:pointer; font-weight:600;">🔄 刷新</button>
+        <!-- 处理中提示条 -->
+        <div id="uploadLoading" class="loading">⏳ 正在由 AI 压缩并识别收据中...</div>
+
+        <!-- 3. 聚合搜索与分段分类滚动条 -->
+        <div class="filter-section">
+            <div class="search-bar-row">
+                <div class="search-pill">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="filterKeyword" class="search-input-sleek" placeholder="🔍 快速搜索商家名或商品..." oninput="applyFilters()">
                 </div>
+                <!-- 唤起高级时光轴筛选抽屉 -->
+                <button class="filter-more-btn" id="openFilterBtn" onclick="openFilterDrawer()" title="更多时光轴筛选">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    <span id="filterMoreBtnText">筛选</span>
+                </button>
             </div>
-            <!-- 英雄总览支出卡片 (Copilot Money 风格) -->
-            <div class="hero-spending-card">
-                <div class="hero-spending-header">
-                    <span class="hero-spending-label" id="heroPeriodLabel">📊 支出总览</span>
-                    <span class="hero-receipt-count" id="totalCount">0 笔支出</span>
-                </div>
-                <div class="hero-spending-amount" id="totalAmount">RM 0.00</div>
-                <div class="hero-metrics-row">
-                    <div class="hero-metric-item">
-                        <span class="hero-metric-sub" id="heroMaxSub">单笔最高</span>
-                        <span class="hero-metric-val" id="heroMaxAmount">RM 0.00</span>
-                    </div>
-                    <div class="hero-metric-divider"></div>
-                    <div class="hero-metric-item">
-                        <span class="hero-metric-sub" id="heroAvgSub">笔均开销</span>
-                        <span class="hero-metric-val" id="heroAvgAmount">RM 0.00</span>
-                    </div>
-                    <div class="hero-metric-divider"></div>
-                    <div class="hero-metric-item">
-                        <span class="hero-metric-sub" id="heroTopSub">主要支出类别</span>
-                        <span class="hero-metric-val" id="heroTopCategory">无</span>
-                    </div>
-                </div>
+
+            <!-- 水平滚动分类胶囊条 -->
+            <div class="cat-chips-scroll" id="catChipsScroll">
+                <!-- 动态由 updateCategoryChipsUI() 渲染 -->
             </div>
-            <div id="receiptList"></div>
         </div>
+
+        <!-- 4. 收据明细流 -->
+        <div class="transactions-header">
+            <h3 class="transactions-title" id="listTitle">📋 收据清单</h3>
+            <span class="transactions-count-tag" id="appTitleHeader" style="display:none;">智能收据管家</span>
+        </div>
+
+        <!-- 列表容器 -->
+        <div id="receiptList"></div>
+
     </div>
 
-    <!-- 模态框 1: 核对与编辑收据 -->
+    <!-- 5. 底部悬浮岛导航 (Floating Island Dock) -->
+    <nav class="island-dock">
+        <!-- 回到顶部 / 重置筛选 -->
+        <button type="button" class="dock-btn" onclick="scrollToTopOrReset()" id="dockListBtn">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span id="dockListText">明细</span>
+        </button>
+
+        <!-- 拍小票快门键 -->
+        <label for="cameraInput" class="dock-shutter-btn" id="dockCameraBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span id="dockCameraText">拍小票</span>
+        </label>
+
+        <!-- 专属问账抽屉入口 -->
+        <button type="button" class="dock-btn" onclick="openAiDrawer()" id="dockAiBtn">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span id="dockAiText">问账</span>
+        </button>
+    </nav>
+
+    <!-- 真实相机文件输入 -->
+    <input type="file" id="cameraInput" accept="image/*" capture="environment">
+
+    <!-- 抽屉 1: 核对与编辑收据 (Edit BottomSheet) -->
     <div id="editModal" class="modal-overlay">
         <div class="modal-box">
-            <h3 id="modalTitle" style="font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 14px;">📋 核对收据信息</h3>
+            <div class="drawer-drag-pill"></div>
+            <div class="drawer-header-row">
+                <h3 id="modalTitle" class="drawer-title">📋 核对收据信息</h3>
+                <button class="drawer-close-btn" onclick="closeEditModal()">✕</button>
+            </div>
             
-            <div id="modalPhotoPreview" style="display:none; margin-bottom:12px; text-align:center;">
-                <img id="modalPreviewImg" style="max-height:160px; max-width:100%; border-radius:10px; border:1px solid #cbd5e1;">
+            <div id="modalPhotoPreview" style="display:none; margin-bottom:14px; text-align:center;">
+                <img id="modalPreviewImg" style="max-height:180px; max-width:100%; border-radius:14px; border:1px solid #E2E8F0;">
             </div>
 
             <div class="form-group">
@@ -735,7 +1051,7 @@
 
             <div class="form-group">
                 <label id="editNotesLabel">商品明细 / 备注</label>
-                <textarea id="editNotes" class="form-control" rows="2" placeholder="填写具体买了什么（例如: 2盒牛奶、全麦面包），方便后续 AI 查账回答！"></textarea>
+                <textarea id="editNotes" class="form-control" rows="2" placeholder="填写具体买了什么（例如: 2盒牛奶、备件零件），方便后续 AI 查账！"></textarea>
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 18px;">
@@ -745,10 +1061,92 @@
         </div>
     </div>
 
-    <!-- 模态框 2: 系统与 API 引擎设置 -->
+    <!-- 抽屉 2: AI 智能查账问答 (AI Assistant BottomSheet) -->
+    <div id="aiDrawer" class="modal-overlay">
+        <div class="modal-box" id="aiQueryCard">
+            <div class="drawer-drag-pill"></div>
+            <div class="drawer-header-row">
+                <h3 class="drawer-title" id="aiCardTitle">
+                    🤖 <span id="aiCardTitleText">智能财务问账顾问</span>
+                </h3>
+                <button class="drawer-close-btn" onclick="closeAiDrawer()">✕</button>
+            </div>
+
+            <div class="ai-input-group">
+                <input type="text" id="aiQuery" class="ai-prompt-input" placeholder="例如: 我买数码一共花了多少钱？" onkeydown="if(event.key==='Enter') askAi()">
+                <button class="ai-ask-btn" id="aiAskBtn" onclick="askAi()">提问</button>
+            </div>
+
+            <!-- 猜你想问快捷胶囊 -->
+            <div class="ai-chips-scroll" id="aiChipsContainer"></div>
+
+            <!-- 呼吸光效加载状态 -->
+            <div id="aiLoading" class="ai-loading-container" style="display:none;">
+                <div class="ai-shimmer-bar"></div>
+                <div class="ai-loading-text">
+                    <span class="ai-pulse-dot"></span> <span id="aiLoadingText">财务 AI 顾问正在翻阅账本、计算梳理中...</span>
+                </div>
+            </div>
+
+            <!-- 结构化排版回答卡片 -->
+            <div id="aiAnswerCard" class="ai-answer-card" style="display:none;">
+                <div class="ai-answer-header">
+                    <span class="ai-bot-badge" id="aiAnswerBotName">✨ 智能财务顾问分析</span>
+                    <div class="ai-actions-bar">
+                        <button type="button" class="ai-mini-btn" id="aiCopyBtn" onclick="copyAiAnswer()">📋 复制</button>
+                        <button type="button" class="ai-mini-btn" id="aiCloseBtn" onclick="closeAiAnswer()">✕ 收起</button>
+                    </div>
+                </div>
+                <div id="aiAnswerBody" class="ai-answer-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 抽屉 3: 多维时光轴筛选器 (Advanced Filter BottomSheet) -->
+    <div id="filterDrawer" class="modal-overlay">
+        <div class="modal-box">
+            <div class="drawer-drag-pill"></div>
+            <div class="drawer-header-row">
+                <h3 class="drawer-title" id="filterHeaderTitle">🔎 多维时光轴筛选</h3>
+                <button id="filterResetBtn" onclick="resetFilters()" style="background:none; border:none; color:var(--accent); font-size:13px; cursor:pointer; font-weight:700;">重置条件</button>
+            </div>
+
+            <div class="form-group">
+                <label>选择年份</label>
+                <select id="filterYear" class="form-control" onchange="applyFilters()">
+                    <option value="ALL">📅 所有年份</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>选择月份</label>
+                <select id="filterMonth" class="form-control" onchange="applyFilters()">
+                    <option value="ALL">📆 所有月份</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>特定日期</label>
+                <input type="date" id="filterExactDate" class="form-control" onchange="applyFilters()">
+            </div>
+
+            <!-- 内部保持 filterCategory 下拉供 JS 读写 -->
+            <select id="filterCategory" style="display:none;" onchange="applyFilters()">
+                <option value="ALL">ALL</option>
+            </select>
+
+            <button class="btn btn-primary" style="margin-top:14px;" onclick="closeFilterDrawer()">✓ 确定筛选</button>
+        </div>
+    </div>
+
+    <!-- 抽屉 4: 系统与 API 引擎设置 (Settings BottomSheet) -->
     <div id="settingsModal" class="modal-overlay">
         <div class="modal-box">
-            <h3 style="font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 14px;" id="settingsModalTitle">⚙️ 系统设置与 AI 引擎</h3>
+            <div class="drawer-drag-pill"></div>
+            <div class="drawer-header-row">
+                <h3 class="drawer-title" id="settingsModalTitle">⚙️ 系统设置与 AI 引擎</h3>
+                <button class="drawer-close-btn" onclick="closeSettingsModal()">✕</button>
+            </div>
 
             <div class="form-group">
                 <label id="i18n_langLabel">🌐 全局界面语言 / App Language</label>
@@ -792,7 +1190,7 @@
                     <input type="password" id="qwenKeyInput" class="form-control" placeholder="输入对应平台的 API Key (sk-...)">
                 </div>
                 <p style="font-size:11px; color:var(--text-muted); margin-top:4px;" id="qwenTipText">
-                    提示：纯网页端调用阿里云百炼会被浏览器拦截(CORS)，推荐使用【硅基流动】，国内免翻墙且原生支持网页调用！
+                    提示：纯网页端调用阿里云百炼会被浏览器拦截(CORS)，推荐使用【硅基流动】或【OpenRouter】！
                 </p>
             </div>
 
@@ -804,23 +1202,27 @@
                 </p>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <div style="display: flex; gap: 10px; margin-top: 18px;">
                 <button class="btn btn-primary" id="saveSettingsBtn" onclick="saveSettings()">保存设置</button>
                 <button class="btn btn-secondary" id="closeSettingsBtn" onclick="closeSettingsModal()">关闭</button>
             </div>
 
             <div style="border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 16px; text-align: center;">
-                <span style="font-size:12px; color:var(--text-muted);" id="appVersionText">版本: v1.3 (双语国际化 & 商业器材支持)</span><br>
-                <button type="button" class="btn" style="background:#f1f5f9; color:#1e293b; margin-top:6px; font-size:12px; padding:8px;" id="forceRefreshBtn" onclick="forceRefreshApp()">🔄 强制清除缓存并同步最新版</button>
+                <span style="font-size:12px; color:var(--text-muted);" id="appVersionText">版本: v1.4 (Apple HIG & 弹簧微交互重构)</span><br>
+                <button type="button" class="btn" style="background:#f1f5f9; color:#1e293b; margin-top:8px; font-size:12px; padding:9px;" id="forceRefreshBtn" onclick="forceRefreshApp()">🔄 强制清除缓存并同步最新版</button>
             </div>
         </div>
     </div>
 
-    <!-- 模态框 3: 意见反馈 (Feedback) -->
+    <!-- 抽屉 5: 意见反馈 (Feedback BottomSheet) -->
     <div id="feedbackModal" class="modal-overlay">
         <div class="modal-box">
-            <h3 style="font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 14px;" id="feedbackModalTitle">💬 提交意见反馈</h3>
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;" id="feedbackModalSubtitle">您的反馈将直接记录供开发者跟进与优化！</p>
+            <div class="drawer-drag-pill"></div>
+            <div class="drawer-header-row">
+                <h3 class="drawer-title" id="feedbackModalTitle">💬 提交意见反馈</h3>
+                <button class="drawer-close-btn" onclick="closeFeedbackModal()">✕</button>
+            </div>
+            <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;" id="feedbackModalSubtitle">您的反馈将直接记录供开发者跟进与优化！</p>
 
             <div class="form-group">
                 <label id="i18n_fbTypeLabel">反馈类别</label>
@@ -853,19 +1255,23 @@
         </div>
     </div>
 
+    <!-- 兼容隐藏节点以防旧样式引用 -->
+    <div id="userSwitchLabel" style="display:none;"></div>
+    <div id="aiCardBadge" style="display:none;"></div>
+
     <script>
         const categories = ["餐饮美食", "超市便利", "交通出行", "工作器材与备件", "休闲娱乐", "医疗保健", "电子数码", "其他"];
 
-        // 语义化分类视觉配置 (色彩心理学 & 扁平马卡龙调色)
+        // 语义化分类视觉配置 (马卡龙莫兰迪调色系统)
         const CATEGORY_STYLES = {
-            "餐饮美食": { icon: "🍔", color: "#b91c1c", bg: "#fee2e2", border: "#fca5a5" },
-            "超市便利": { icon: "🛒", color: "#b45309", bg: "#fef3c7", border: "#fcd34d" },
-            "交通出行": { icon: "🚗", color: "#0369a1", bg: "#e0f2fe", border: "#7dd3fc" },
+            "餐饮美食":     { icon: "🍔", color: "#b91c1c", bg: "#fee2e2", border: "#fca5a5" },
+            "超市便利":     { icon: "🛒", color: "#b45309", bg: "#fef3c7", border: "#fcd34d" },
+            "交通出行":     { icon: "🚗", color: "#0369a1", bg: "#e0f2fe", border: "#7dd3fc" },
             "工作器材与备件": { icon: "🛠️", color: "#c2410c", bg: "#ffedd5", border: "#fdba74" },
-            "休闲娱乐": { icon: "🎮", color: "#7e22ce", bg: "#f3e8ff", border: "#d8b4fe" },
-            "医疗保健": { icon: "💊", color: "#15803d", bg: "#dcfce7", border: "#86efac" },
-            "电子数码": { icon: "📱", color: "#4338ca", bg: "#e0e7ff", border: "#a5b4fc" },
-            "其他":     { icon: "📦", color: "#475569", bg: "#f1f5f9", border: "#cbd5e1" }
+            "休闲娱乐":     { icon: "🎮", color: "#7e22ce", bg: "#f3e8ff", border: "#d8b4fe" },
+            "医疗保健":     { icon: "💊", color: "#15803d", bg: "#dcfce7", border: "#86efac" },
+            "电子数码":     { icon: "📱", color: "#4338ca", bg: "#e0e7ff", border: "#a5b4fc" },
+            "其他":         { icon: "📦", color: "#475569", bg: "#f1f5f9", border: "#cbd5e1" }
         };
 
         function getCategoryMeta(cat) {
@@ -888,7 +1294,81 @@
                 .replace(/'/g, "&#039;");
         }
 
+        // ==========================================
+        // 关键技术修复：Canvas 高性能图片压缩 (防止 LocalStorage 爆仓)
+        // ==========================================
+        function compressImage(file, maxDimension = 1024, quality = 0.7) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxDimension || height > maxDimension) {
+                            if (width > height) {
+                                height = Math.round((height * maxDimension) / width);
+                                width = maxDimension;
+                            } else {
+                                width = Math.round((width * maxDimension) / height);
+                                height = maxDimension;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve(compressedDataUrl);
+                    };
+                    img.onerror = () => reject(new Error('图片加载失败'));
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => reject(new Error('文件读取失败'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ==========================================
+        // 弹窗与抽屉核心管理器 (Smooth BottomSheet Engine)
+        // ==========================================
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.style.display = 'flex';
+            void el.offsetWidth; // 触发回流启动过渡动画
+            el.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('active');
+            document.body.style.overflow = '';
+            setTimeout(() => {
+                if (!el.classList.contains('active')) {
+                    el.style.display = 'none';
+                }
+            }, 320);
+        }
+
+        function openAiDrawer() { openModal('aiDrawer'); }
+        function closeAiDrawer() { closeModal('aiDrawer'); }
+
+        function openFilterDrawer() { openModal('filterDrawer'); }
+        function closeFilterDrawer() { closeModal('filterDrawer'); }
+
+        function scrollToTopOrReset() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ==========================================
         // AI 回答视觉结构化排版引擎
+        // ==========================================
         let lastAiRawResponse = "";
 
         function highlightRMAmounts(text) {
@@ -898,7 +1378,7 @@
         }
 
         function formatInlineMarkdown(text) {
-            let out = text.replace(/\*\*(.*?)\*\*/g, '<strong class="ai-bold">$1</strong>');
+            let out = text.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--slate-navy); font-weight:700;">$1</strong>');
             out = out.replace(/\*(.*?)\*/g, '<em>$1</em>');
             out = highlightRMAmounts(out);
             return out;
@@ -913,7 +1393,7 @@
                 let trimmed = line.trim();
                 if (!trimmed) return;
 
-                // 标题层级 (### 或 ##)
+                // 标题层级
                 if (/^#{1,4}\s+/.test(trimmed)) {
                     let headingText = trimmed.replace(/^#{1,4}\s+/, '');
                     headingText = highlightRMAmounts(headingText);
@@ -921,7 +1401,7 @@
                     return;
                 }
 
-                // 提示与省钱建议气泡 (💡, 建议, 提示等)
+                // 提示与建议气泡
                 if (/^(💡|提示|建议|省钱建议|温馨提醒|小贴士|Advice|Tip|Suggestion|>\s*)/i.test(trimmed)) {
                     let tipText = trimmed.replace(/^(💡|提示|建议|省钱建议|温馨提醒|小贴士|Advice|Tip|Suggestion|>\s*)[:：]?\s*/i, '');
                     tipText = formatInlineMarkdown(tipText);
@@ -929,17 +1409,17 @@
                     return;
                 }
 
-                // 列表条目 (*, -, •, 1. 等)
+                // 列表条目
                 const listMatch = trimmed.match(/^(\*|-|•|\d+[\.、])\s+(.+)$/);
                 if (listMatch) {
                     let itemContent = formatInlineMarkdown(listMatch[2]);
-                    html += '<div class="ai-list-row"><span class="ai-bullet">✦</span><div class="ai-row-text">' + itemContent + '</div></div>\n';
+                    html += '<div class="ai-list-row"><span class="ai-bullet">✦</span><div>' + itemContent + '</div></div>\n';
                     return;
                 }
 
                 // 普通段落
                 let paraContent = formatInlineMarkdown(trimmed);
-                html += '<p class="ai-para">' + paraContent + '</p>\n';
+                html += '<p style="margin-bottom:8px;">' + paraContent + '</p>\n';
             });
 
             return html;
@@ -956,11 +1436,11 @@
         function copyAiAnswer() {
             if (!lastAiRawResponse) return;
             navigator.clipboard.writeText(lastAiRawResponse).then(() => {
-                const btns = document.querySelectorAll('.ai-mini-btn');
-                if (btns && btns.length > 0) {
-                    const originalText = btns[0].innerText;
-                    btns[0].innerText = '✅ 已复制';
-                    setTimeout(() => { btns[0].innerText = originalText; }, 2000);
+                const btn = document.getElementById('aiCopyBtn');
+                if (btn) {
+                    const originalText = btn.innerText;
+                    btn.innerText = '✅ ' + t('aiCopied');
+                    setTimeout(() => { btn.innerText = originalText; }, 2000);
                 }
             }).catch(() => {
                 alert('已复制到剪贴板');
@@ -969,12 +1449,12 @@
 
         function closeAiAnswer() {
             const card = document.getElementById('aiAnswerCard');
-            if (card) {
-                card.style.display = 'none';
-            }
+            if (card) card.style.display = 'none';
         }
 
-        // 存储键定义
+        // ==========================================
+        // 存储键与双语系统定义
+        // ==========================================
         const USERS_KEY = "receipt_app_users_list";
         const CURRENT_USER_KEY = "receipt_app_active_user";
         const STORAGE_PREFIX = "phone_receipts_user_";
@@ -987,7 +1467,6 @@
         const LANG_STORAGE_KEY = "receipt_app_language";
         const FEEDBACK_EMAIL_STORAGE = "receipt_app_feedback_email";
 
-        // 全局多语言词典 (中英文双语)
         const CATEGORY_NAMES_EN = {
             "餐饮美食": "Food & Dining",
             "超市便利": "Groceries & Mart",
@@ -1017,30 +1496,28 @@
                 langToggle: "🌐 EN",
                 feedbackNav: "💬 反馈",
                 settingsNav: "⚙️ 设置",
-                userSwitchLabel: "👤 当前账本:",
-                newBookBtn: "+ 新账本",
-                switchEngineLink: "切换引擎 ➔",
-                uploadAreaTitle: "点击拍照或选择小票",
-                uploadSubtext: "支持智能识别或纯手动存图记账",
-                manualNewBtn: "✍️ 不拍照，直接手动输入记账",
-                uploadLoading: "⏳ 正在处理收据中，请稍候...",
+                manualNewBtnText: "无图手动记账",
+                uploadLoading: "⏳ 正在由 AI 压缩并识别收据中...",
+                dockListText: "明细",
+                dockCameraText: "拍小票",
+                dockAiText: "问账",
+                filterMoreBtnText: "筛选",
                 aiCardTitleText: "智能财务问账顾问",
-                aiCardBadge: "支持问明细 · 查总额",
                 aiQueryPlaceholder: "例如: 我买数码一共花了多少钱？",
                 aiAskBtn: "提问",
                 aiLoadingText: "财务 AI 顾问正在翻阅账本、计算梳理中...",
                 aiAnswerHeader: "✨ 智能财务顾问分析",
                 aiCopyBtn: "📋 复制",
-                aiCopied: "✅ 已复制",
+                aiCopied: "已复制",
                 aiCloseBtn: "✕ 收起",
-                filterHeaderTitle: "🔎 多维时光轴筛选 (年/月/日/类别)",
+                filterHeaderTitle: "🔎 多维时光轴筛选",
                 filterResetBtn: "重置条件",
                 filterAllYears: "📅 所有年份",
                 filterAllMonths: "📆 所有月份",
                 filterAllCats: "🏷️ 所有消费类别",
                 filterKeywordPlaceholder: "🔍 快速搜索商家名或商品...",
-                exportBackupBtn: "💾 导出备份",
-                refreshListBtn: "🔄 刷新",
+                exportBackupBtnText: "导出备份",
+                refreshListBtnText: "刷新",
                 heroPeriodDefault: "📊 支出总览",
                 heroMaxSub: "单笔最高",
                 heroAvgSub: "笔均开销",
@@ -1048,7 +1525,7 @@
                 heroNone: "无",
                 emptyTitle: "暂无收据记录",
                 emptyFilteredSub: "未找到符合条件的账单，可尝试重置筛选",
-                emptyInitialSub: "点击上方“拍照识别”或“手动输入”开始第一笔记账吧",
+                emptyInitialSub: "点击下方“拍小票”或上方“无图记账”开始第一笔记录吧",
                 editModalNewTitle: "📋 核对收据信息",
                 editModalEditTitle: "✏️ 修改收据信息",
                 editMerchantLabel: "商家名称",
@@ -1057,7 +1534,7 @@
                 editDateLabel: "消费日期",
                 editCategoryLabel: "消费分类",
                 editNotesLabel: "商品明细 / 备注",
-                editNotesPlaceholder: "填写具体买了什么（例如: 2盒牛奶、全麦面包），方便后续 AI 查账回答！",
+                editNotesPlaceholder: "填写具体买了什么（例如: 2盒牛奶、备件零件），方便后续 AI 查账！",
                 confirmSaveBtn: "✓ 确认保存并归档",
                 cancelEditBtn: "取消",
                 settingsModalTitle: "⚙️ 系统设置与 AI 引擎",
@@ -1073,7 +1550,7 @@
                 i18n_fbEmailTip: "配置后，用户在手机端提交的反馈将通过 Web3Forms 免费直发至此邮箱，电脑即时查阅！",
                 saveSettingsBtn: "保存设置",
                 closeSettingsBtn: "关闭",
-                appVersionText: "版本: v1.3 (双语国际化 & 商业器材支持)",
+                appVersionText: "版本: v1.4 (Apple HIG & 弹簧微交互重构)",
                 forceRefreshBtn: "🔄 强制清除缓存并同步最新版",
                 feedbackModalTitle: "💬 提交意见反馈",
                 feedbackModalSubtitle: "您的反馈将直接记录供开发者跟进与优化！",
@@ -1099,34 +1576,32 @@
                 alertNeedQwenKey: "请先点击右上角【⚙️ 设置】配置您的千问 API Key！"
             },
             en: {
-                appTitle: "Receipt AI Manager",
+                appTitle: "Receipt Butler",
                 langToggle: "🌐 中文",
                 feedbackNav: "💬 Feedback",
                 settingsNav: "⚙️ Settings",
-                userSwitchLabel: "👤 Ledger:",
-                newBookBtn: "+ New Ledger",
-                switchEngineLink: "Change Engine ➔",
-                uploadAreaTitle: "Tap to Snap or Upload Receipt",
-                uploadSubtext: "Supports AI auto-recognition & manual photo entry",
-                manualNewBtn: "✍️ Manual Entry (No Camera)",
-                uploadLoading: "⏳ Processing receipt, please wait...",
+                manualNewBtnText: "Manual Entry",
+                uploadLoading: "⏳ Compressing and parsing receipt via AI...",
+                dockListText: "Records",
+                dockCameraText: "Snap Receipt",
+                dockAiText: "AI Advisor",
+                filterMoreBtnText: "Filter",
                 aiCardTitleText: "AI Financial Advisor",
-                aiCardBadge: "Ask Items · Totals",
                 aiQueryPlaceholder: "e.g. How much did I spend on dining this month?",
                 aiAskBtn: "Ask AI",
                 aiLoadingText: "Financial AI advisor is reviewing ledgers & calculating...",
                 aiAnswerHeader: "✨ AI Financial Insights",
                 aiCopyBtn: "📋 Copy",
-                aiCopied: "✅ Copied",
+                aiCopied: "Copied",
                 aiCloseBtn: "✕ Close",
-                filterHeaderTitle: "🔎 Multi-Filter (Year / Month / Date / Cat)",
+                filterHeaderTitle: "🔎 Multi-Timeline Filter",
                 filterResetBtn: "Reset",
                 filterAllYears: "📅 All Years",
                 filterAllMonths: "📆 All Months",
                 filterAllCats: "🏷️ All Categories",
                 filterKeywordPlaceholder: "🔍 Search merchant or item notes...",
-                exportBackupBtn: "💾 Export Backup",
-                refreshListBtn: "🔄 Refresh",
+                exportBackupBtnText: "Backup",
+                refreshListBtnText: "Refresh",
                 heroPeriodDefault: "📊 Expense Overview",
                 heroMaxSub: "Single Max",
                 heroAvgSub: "Average",
@@ -1134,7 +1609,7 @@
                 heroNone: "None",
                 emptyTitle: "No Receipts Yet",
                 emptyFilteredSub: "No matching records found, try resetting filters",
-                emptyInitialSub: "Tap 'Snap Receipt' or 'Manual Entry' above to add your first receipt",
+                emptyInitialSub: "Tap 'Snap Receipt' below or 'Manual Entry' to add your first record",
                 editModalNewTitle: "📋 Verify Receipt Details",
                 editModalEditTitle: "✏️ Edit Receipt Details",
                 editMerchantLabel: "Merchant Name",
@@ -1159,7 +1634,7 @@
                 i18n_fbEmailTip: "When configured, feedback submitted from mobile is forwarded free via Web3Forms straight to your PC!",
                 saveSettingsBtn: "Save Settings",
                 closeSettingsBtn: "Close",
-                appVersionText: "Version: v1.3 (Bilingual & Equipment Support)",
+                appVersionText: "Version: v1.4 (Apple HIG & Fluid Springs)",
                 forceRefreshBtn: "🔄 Force Clear Cache & Sync Latest",
                 feedbackModalTitle: "💬 Submit User Feedback",
                 feedbackModalSubtitle: "Your feedback is directly recorded for developer optimization!",
@@ -1208,44 +1683,29 @@
         function applyLanguage() {
             const isEn = getCurrentLanguage() === 'en';
 
-            // 头部
-            const appTitleHeader = document.getElementById('appTitleHeader');
-            if (appTitleHeader) appTitleHeader.innerText = t('appTitle');
-
             const langToggleBtn = document.getElementById('langToggleBtn');
             if (langToggleBtn) langToggleBtn.innerText = t('langToggle');
 
-            const feedbackNavBtn = document.getElementById('feedbackNavBtn');
-            if (feedbackNavBtn) feedbackNavBtn.innerText = t('feedbackNav');
+            const manualNewBtnText = document.getElementById('manualNewBtnText');
+            if (manualNewBtnText) manualNewBtnText.innerText = t('manualNewBtnText');
 
-            const settingsNavBtn = document.getElementById('settingsNavBtn');
-            if (settingsNavBtn) settingsNavBtn.innerText = t('settingsNav');
+            const dockListText = document.getElementById('dockListText');
+            if (dockListText) dockListText.innerText = t('dockListText');
 
-            const userSwitchLabel = document.getElementById('userSwitchLabel');
-            if (userSwitchLabel) userSwitchLabel.innerText = t('userSwitchLabel');
+            const dockCameraText = document.getElementById('dockCameraText');
+            if (dockCameraText) dockCameraText.innerText = t('dockCameraText');
 
-            const newBookBtn = document.getElementById('newBookBtn');
-            if (newBookBtn) newBookBtn.innerText = t('newBookBtn');
+            const dockAiText = document.getElementById('dockAiText');
+            if (dockAiText) dockAiText.innerText = t('dockAiText');
 
-            // 记账卡片
-            const switchEngineLink = document.getElementById('switchEngineLink');
-            if (switchEngineLink) switchEngineLink.innerText = t('switchEngineLink');
-
-            const uploadAreaTitle = document.getElementById('uploadAreaTitle');
-            if (uploadAreaTitle) uploadAreaTitle.innerText = t('uploadAreaTitle');
-
-            const manualNewBtn = document.getElementById('manualNewBtn');
-            if (manualNewBtn) manualNewBtn.innerText = t('manualNewBtn');
+            const filterMoreBtnText = document.getElementById('filterMoreBtnText');
+            if (filterMoreBtnText) filterMoreBtnText.innerText = t('filterMoreBtnText');
 
             const uploadLoading = document.getElementById('uploadLoading');
             if (uploadLoading) uploadLoading.innerText = t('uploadLoading');
 
-            // AI 查账卡片
             const aiCardTitleText = document.getElementById('aiCardTitleText');
             if (aiCardTitleText) aiCardTitleText.innerText = t('aiCardTitleText');
-
-            const aiCardBadge = document.getElementById('aiCardBadge');
-            if (aiCardBadge) aiCardBadge.innerText = t('aiCardBadge');
 
             const aiQuery = document.getElementById('aiQuery');
             if (aiQuery) aiQuery.placeholder = t('aiQueryPlaceholder');
@@ -1296,12 +1756,11 @@
             const filterKeyword = document.getElementById('filterKeyword');
             if (filterKeyword) filterKeyword.placeholder = t('filterKeywordPlaceholder');
 
-            // 收据列表头部与 Hero
-            const exportBackupBtn = document.getElementById('exportBackupBtn');
-            if (exportBackupBtn) exportBackupBtn.innerText = t('exportBackupBtn');
+            const exportBackupBtnText = document.getElementById('exportBackupBtnText');
+            if (exportBackupBtnText) exportBackupBtnText.innerText = t('exportBackupBtnText');
 
-            const refreshListBtn = document.getElementById('refreshListBtn');
-            if (refreshListBtn) refreshListBtn.innerText = t('refreshListBtn');
+            const refreshListBtnText = document.getElementById('refreshListBtnText');
+            if (refreshListBtnText) refreshListBtnText.innerText = t('refreshListBtnText');
 
             const heroMaxSub = document.getElementById('heroMaxSub');
             if (heroMaxSub) heroMaxSub.innerText = t('heroMaxSub');
@@ -1461,59 +1920,66 @@
             const exportFbBtn = document.getElementById('exportFbBtn');
             if (exportFbBtn) exportFbBtn.innerText = t('exportFbBtn');
 
-            // 同步当前引擎 UI 状态与分类筛选下拉选项
             updateEngineUI();
             initCategoryFilter();
             renderCurrentUser();
         }
 
-        // 获取当前 AI 引擎
         function getSelectedEngine() {
             return localStorage.getItem(ENGINE_KEY) || "gemini";
         }
 
-        // 初始化
+        // ==========================================
+        // 初始化与事件监听
+        // ==========================================
         window.onload = function() {
             initUserSelect();
             applyLanguage();
 
-            // 点击弹窗背景遮罩外部快速关闭弹窗
+            // 点击遮罩外部半透明暗色区域顺畅关闭抽屉
             document.querySelectorAll('.modal-overlay').forEach(overlay => {
                 overlay.addEventListener('click', function(e) {
                     if (e.target === this) {
-                        this.style.display = 'none';
+                        closeModal(this.id);
                         if (this.id === 'editModal') activeEditReceipt = null;
                     }
                 });
             });
         };
 
-        // 更新引擎 UI 提示
         function updateEngineUI() {
             const engine = getSelectedEngine();
             const isEn = getCurrentLanguage() === 'en';
             const badge = document.getElementById('currentEngineBadge');
-            const subtext = document.getElementById('uploadSubtext');
             const aiCard = document.getElementById('aiQueryCard');
+            const dockAiBtn = document.getElementById('dockAiBtn');
 
-            if (!badge || !subtext) return;
+            if (!badge) return;
 
             if (engine === 'gemini') {
-                badge.innerText = isEn ? '🤖 Engine: Google Gemini' : '🤖 当前引擎: Google Gemini';
-                subtext.innerText = isEn ? 'AI auto-extracts RM total amount upon photo upload' : '拍照后由 Gemini 自动识别实付 RM 金额';
+                badge.innerText = isEn ? '⚡ Gemini 2.0' : '⚡ Gemini 智能';
+                badge.style.color = '#1D4ED8';
+                badge.style.background = '#EFF6FF';
                 if (aiCard) aiCard.style.display = 'block';
+                if (dockAiBtn) dockAiBtn.style.display = 'inline-flex';
             } else if (engine === 'qwen') {
-                badge.innerText = isEn ? '🌐 Engine: Qwen 2.5-VL' : '🌐 当前引擎: 开源千问 Qwen 2.5-VL';
-                subtext.innerText = isEn ? 'Open-source multimodal model parses receipt securely' : '拍照后由开源大模型安全识别小票';
+                badge.innerText = isEn ? '🌐 Qwen 2.5' : '🌐 开源千问';
+                badge.style.color = '#7C3AED';
+                badge.style.background = '#F5F3FF';
                 if (aiCard) aiCard.style.display = 'block';
+                if (dockAiBtn) dockAiBtn.style.display = 'inline-flex';
             } else {
-                badge.innerText = isEn ? '✍️ Mode: Manual (Photo)' : '✍️ 当前模式: 纯手动拍照记账';
-                subtext.innerText = isEn ? 'Local photo archive only, zero AI, zero data used' : '仅拍照保存小票图片，无需 AI，纯本地记账';
-                if (aiCard) aiCard.style.display = 'none'; // 手动模式隐藏 AI 提问卡片
+                badge.innerText = isEn ? '✍️ Manual' : '✍️ 纯手动';
+                badge.style.color = '#475569';
+                badge.style.background = '#F1F5F9';
+                if (aiCard) aiCard.style.display = 'none';
+                if (dockAiBtn) dockAiBtn.style.display = 'none';
             }
         }
 
-        // 用户账本管理
+        // ==========================================
+        // 多账本用户管理
+        // ==========================================
         function getUserList() {
             try {
                 let users = JSON.parse(localStorage.getItem(USERS_KEY));
@@ -1540,6 +2006,10 @@
             const current = getCurrentUser();
             const sel = document.getElementById('userSelect');
             sel.innerHTML = users.map(u => `<option value="${u}" ${u === current ? 'selected' : ''}>${u}</option>`).join('');
+            
+            const currentUserNameLabel = document.getElementById('currentUserNameLabel');
+            if (currentUserNameLabel) currentUserNameLabel.innerText = current;
+
             const isEn = getCurrentLanguage() === 'en';
             const listTitle = document.getElementById('listTitle');
             if (listTitle) listTitle.innerText = isEn ? ('📋 ' + current + '\'s Receipts') : ('📋 ' + current + ' 的收据清单');
@@ -1575,18 +2045,40 @@
             renderCurrentUser();
         }
 
-        // 筛选逻辑
+        // ==========================================
+        // 筛选体系与水平胶囊条 (Filter Engine)
+        // ==========================================
         function initCategoryFilter() {
             const catSel = document.getElementById('filterCategory');
-            if (!catSel) return;
-            const cur = catSel.value;
+            if (catSel) {
+                catSel.innerHTML = '<option value="ALL">ALL</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            }
+            updateCategoryChipsUI();
+        }
+
+        function updateCategoryChipsUI() {
+            const container = document.getElementById('catChipsScroll');
+            if (!container) return;
+            const curVal = (document.getElementById('filterCategory') && document.getElementById('filterCategory').value) || 'ALL';
             const isEn = getCurrentLanguage() === 'en';
-            const allLabel = isEn ? '🏷️ All Categories' : '🏷️ 所有消费类别';
-            catSel.innerHTML = `<option value="ALL">${allLabel}</option>` + categories.map(c => {
+
+            let html = `<button type="button" class="cat-chip ${curVal === 'ALL' ? 'active' : ''}" onclick="selectCategoryChip('ALL')">✨ ${isEn ? 'All' : '全部'}</button>`;
+            categories.forEach(c => {
                 const meta = getCategoryMeta(c);
                 const name = getCategoryDisplayName(c);
-                return `<option value="${c}" ${c === cur ? 'selected' : ''}>${meta.icon} ${name}</option>`;
-            }).join('');
+                const isActive = curVal === c;
+                html += `<button type="button" class="cat-chip ${isActive ? 'active' : ''}" onclick="selectCategoryChip('${c}')">
+                    <span>${meta.icon}</span> ${escapeHtml(name)}
+                </button>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function selectCategoryChip(cat) {
+            const catSel = document.getElementById('filterCategory');
+            if (catSel) catSel.value = cat;
+            updateCategoryChipsUI();
+            applyFilters();
         }
 
         function updateTimeFilterOptions(list) {
@@ -1619,11 +2111,11 @@
 
         function applyFilters() {
             const all = getCurrentUserReceipts();
-            const y = document.getElementById('filterYear').value;
-            const m = document.getElementById('filterMonth').value;
-            const c = document.getElementById('filterCategory').value;
-            const d = document.getElementById('filterExactDate').value;
-            const k = document.getElementById('filterKeyword').value.trim().toLowerCase();
+            const y = (document.getElementById('filterYear') && document.getElementById('filterYear').value) || 'ALL';
+            const m = (document.getElementById('filterMonth') && document.getElementById('filterMonth').value) || 'ALL';
+            const c = (document.getElementById('filterCategory') && document.getElementById('filterCategory').value) || 'ALL';
+            const d = (document.getElementById('filterExactDate') && document.getElementById('filterExactDate').value) || '';
+            const k = (document.getElementById('filterKeyword') && document.getElementById('filterKeyword').value.trim().toLowerCase()) || '';
 
             const filtered = all.filter(r => {
                 if (d && r.date !== d) return false;
@@ -1664,12 +2156,14 @@
         }
 
         function resetFilters() {
-            document.getElementById('filterYear').value = 'ALL';
-            document.getElementById('filterMonth').value = 'ALL';
-            document.getElementById('filterCategory').value = 'ALL';
-            document.getElementById('filterExactDate').value = '';
-            document.getElementById('filterKeyword').value = '';
+            if (document.getElementById('filterYear')) document.getElementById('filterYear').value = 'ALL';
+            if (document.getElementById('filterMonth')) document.getElementById('filterMonth').value = 'ALL';
+            if (document.getElementById('filterCategory')) document.getElementById('filterCategory').value = 'ALL';
+            if (document.getElementById('filterExactDate')) document.getElementById('filterExactDate').value = '';
+            if (document.getElementById('filterKeyword')) document.getElementById('filterKeyword').value = '';
+            updateCategoryChipsUI();
             renderCurrentUser();
+            closeFilterDrawer();
         }
 
         function renderCurrentUser() {
@@ -1678,6 +2172,9 @@
             applyFilters();
         }
 
+        // ==========================================
+        // 收据流渲染引擎 (Transactions List Renderer)
+        // ==========================================
         function renderList(list, isFiltered = false) {
             const listDiv = document.getElementById('receiptList');
             const isEn = getCurrentLanguage() === 'en';
@@ -1695,7 +2192,7 @@
 
             const avgAmount = list.length > 0 ? (total / list.length) : 0;
 
-            // 找出总金额最高的支出类别
+            // 统计最高支出分类
             let topCat = '无';
             let topCatMax = 0;
             for (let cat in catSums) {
@@ -1705,7 +2202,7 @@
                 }
             }
 
-            // 更新 Hero 总览卡片核心指标
+            // 更新 Hero 指标
             const totalCountEl = document.getElementById('totalCount');
             if (totalCountEl) totalCountEl.innerText = isEn ? `${list.length} Records` : `${list.length} 笔支出`;
 
@@ -1735,7 +2232,7 @@
                         <div class="empty-title">${isEn ? 'No receipts yet' : '暂无收据记录'}</div>
                         <div class="empty-sub">${isFiltered 
                             ? (isEn ? 'No matching records found, try resetting filters' : '未找到符合条件的账单，可尝试重置筛选') 
-                            : (isEn ? 'Tap "Snap Receipt" or "Manual Entry" above to add your first receipt' : '点击上方“拍照识别”或“手动输入”开始第一笔记账吧')}</div>
+                            : (isEn ? 'Tap "Snap Receipt" below or "Manual Entry" to add your first record' : '点击下方“拍小票”或上方“无图记账”开始第一笔记录吧')}</div>
                     </div>
                 `;
                 return;
@@ -1745,43 +2242,28 @@
                 const meta = getCategoryMeta(r.category);
                 const amt = Number(r.amount) || 0;
                 const catDisplay = getCategoryDisplayName(r.category || '其他');
-                const engineText = r.engine ? (isEn ? 'Parsed by ' + escapeHtml(r.engine) : '由 ' + escapeHtml(r.engine) + ' 录入') : (isEn ? 'Manual Entry' : '手动录入');
                 return `
-                    <div class="receipt-item" style="border-left-color: ${meta.color};">
-                        <div class="receipt-header">
-                            <div class="merchant-area">
-                                <div class="merchant-avatar" style="background:${meta.bg}; color:${meta.color}; border: 1px solid ${meta.border};">
-                                    ${meta.icon}
+                    <div class="receipt-item" onclick="editReceipt('${r.id}')">
+                        <div class="receipt-left">
+                            <div class="category-avatar" style="background:${meta.bg}; color:${meta.color}; border:1px solid ${meta.border};">
+                                ${meta.icon}
+                            </div>
+                            <div class="receipt-details">
+                                <div class="merchant-name">${escapeHtml(r.merchant || (isEn ? 'Unnamed Merchant' : '未命名商家'))}</div>
+                                <div class="receipt-subline">
+                                    <span>${escapeHtml(catDisplay)}</span>
+                                    <span>·</span>
+                                    <span>${escapeHtml(r.date || '')}</span>
+                                    ${r.notes ? `<span class="receipt-note-badge" title="${escapeHtml(r.notes)}">${escapeHtml(r.notes)}</span>` : ''}
                                 </div>
-                                <span class="merchant">${escapeHtml(r.merchant || (isEn ? 'Unnamed Merchant' : '未命名商家'))}</span>
                             </div>
-                            <span class="amount">RM ${amt.toFixed(2)}</span>
                         </div>
 
-                        <div class="receipt-meta-row">
-                            <span class="cat-pill" style="background:${meta.bg}; color:${meta.color}; border:1px solid ${meta.border};">
-                                ${meta.icon} ${escapeHtml(catDisplay)}
-                            </span>
-                            <span>📅 ${escapeHtml(r.date || '')}</span>
-                        </div>
-
-                        ${r.notes ? `
-                            <div class="receipt-note-box">
-                                <b>${isEn ? '📝 Notes:' : '📝 明细备注:'}</b> ${escapeHtml(r.notes)}
-                            </div>
-                        ` : ''}
-
-                        ${r.photo ? `
-                            <div style="margin-bottom:10px;">
-                                <img src="${r.photo}" class="receipt-photo-thumb" onclick="previewFullPhoto('${r.photo}')" title="${isEn ? 'Click to view photo' : '点击查看大图'}">
-                            </div>
-                        ` : ''}
-
-                        <div class="actions">
-                            <span style="font-size:11px; color:#94a3b8;">${engineText}</span>
-                            <div style="display:flex; gap:6px;">
-                                <button class="btn-edit" onclick="editReceipt('${r.id}')">${isEn ? '✏️ Edit' : '✏️ 修改'}</button>
-                                <button class="btn-del" onclick="deleteReceipt('${r.id}')">${isEn ? 'Delete' : '删除'}</button>
+                        <div class="receipt-right">
+                            <span class="receipt-amount-text">RM ${amt.toFixed(2)}</span>
+                            <div class="receipt-actions-mini" onclick="event.stopPropagation()">
+                                <button type="button" class="action-icon-btn" onclick="editReceipt('${r.id}')" title="编辑">✏️</button>
+                                <button type="button" class="action-icon-btn delete" onclick="deleteReceipt('${r.id}')" title="删除">🗑️</button>
                             </div>
                         </div>
                     </div>
@@ -1794,22 +2276,24 @@
             w.document.write(`<img src="${dataUrl}" style="max-width:100%; height:auto;">`);
         }
 
-        // 拍照与文件处理
-        document.getElementById('cameraInput').addEventListener('change', function(e) {
+        // ==========================================
+        // 相机拍摄与带 Canvas 压缩的照片流处理
+        // ==========================================
+        document.getElementById('cameraInput').addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
-            document.getElementById('uploadLoading').style.display = 'block';
+            const uploadLoading = document.getElementById('uploadLoading');
+            if (uploadLoading) uploadLoading.style.display = 'block';
 
-            reader.onload = async function(event) {
-                const photoDataUrl = event.target.result;
+            try {
+                // 关键防爆仓机制：等比缩放至最长边 1024px，JPEG 质量 0.7 压缩
+                const photoDataUrl = await compressImage(file, 1024, 0.7);
                 const base64Data = photoDataUrl.split(',')[1];
                 const engine = getSelectedEngine();
 
                 if (engine === 'manual') {
-                    // 纯手动拍照模式: 直接带图唤起录入弹窗！
-                    document.getElementById('uploadLoading').style.display = 'none';
+                    if (uploadLoading) uploadLoading.style.display = 'none';
                     openEditModal({
                         id: 'rc_' + Date.now(),
                         merchant: '',
@@ -1825,11 +2309,15 @@
                 } else {
                     await processWithGemini(base64Data, photoDataUrl);
                 }
-            };
-            reader.readAsDataURL(file);
+            } catch(err) {
+                alert('图片处理或压缩失败: ' + err.message);
+                if (uploadLoading) uploadLoading.style.display = 'none';
+            } finally {
+                e.target.value = '';
+            }
         });
 
-        // 自动多版本容错调用 Google Gemini API
+        // Gemini 多版本容错调用
         async function fetchGeminiWithFallback(payload, key) {
             const models = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
             let lastErr = null;
@@ -1843,10 +2331,7 @@
                     const d = await res.json();
                     if (d.error) {
                         lastErr = d.error.message || JSON.stringify(d.error);
-                        // 如果报 404 (Not Found)，自动切换下一个候选版本
-                        if (d.error.code === 404 || lastErr.toLowerCase().includes('not found')) {
-                            continue;
-                        }
+                        if (d.error.code === 404 || lastErr.toLowerCase().includes('not found')) continue;
                         throw new Error(lastErr);
                     }
                     if (d.candidates && d.candidates[0] && d.candidates[0].content) {
@@ -1861,11 +2346,10 @@
             throw new Error(lastErr || "所有候选 Gemini 模型版本均无法访问，请检查 API Key");
         }
 
-        // Gemini 识别
         async function processWithGemini(base64Data, photoDataUrl) {
             const key = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
             if (!key) {
-                alert("请先点击右上角【⚙️ 设置】配置您的 Gemini API Key！");
+                alert(t('alertNeedGeminiKey'));
                 document.getElementById('uploadLoading').style.display = 'none';
                 openSettingsModal();
                 return;
@@ -1897,15 +2381,13 @@
                 alert('Gemini 识别出错: ' + e.message);
             } finally {
                 document.getElementById('uploadLoading').style.display = 'none';
-                document.getElementById('cameraInput').value = '';
             }
         }
 
-        // Qwen 2.5-VL 开源多模态识别 (兼容 OpenAI 视觉格式)
         async function processWithQwen(base64Data, photoDataUrl) {
             const key = localStorage.getItem(QWEN_KEY_STORAGE) || "";
             if (!key) {
-                alert("请先点击右上角【⚙️ 设置】配置您的千问 API Key！");
+                alert(t('alertNeedQwenKey'));
                 document.getElementById('uploadLoading').style.display = 'none';
                 openSettingsModal();
                 return;
@@ -1920,7 +2402,6 @@
                 candidateVisionModels = ["qwen-vl-plus"];
             } else if (provider === "openrouter") {
                 endpoint = "https://openrouter.ai/api/v1/chat/completions";
-                // 优先 Qwen-VL，若 OpenRouter 免费池轮换，自动无缝降级到当前可用的高质量免费视觉模型
                 candidateVisionModels = [
                     "qwen/qwen-2.5-vl-72b-instruct:free",
                     "google/gemma-4-31b-it:free",
@@ -2009,7 +2490,6 @@
                 alert('千问模型识别出错: ' + msg);
             } finally {
                 document.getElementById('uploadLoading').style.display = 'none';
-                document.getElementById('cameraInput').value = '';
             }
         }
 
@@ -2027,7 +2507,9 @@
             }, true);
         }
 
-        // 模态弹窗逻辑
+        // ==========================================
+        // 编辑抽屉与保存逻辑
+        // ==========================================
         let activeEditReceipt = null;
         let isCreatingNew = false;
 
@@ -2049,7 +2531,6 @@
 
             document.getElementById('editNotes').value = receipt.notes || '';
 
-            // 照片预览
             const previewBox = document.getElementById('modalPhotoPreview');
             const previewImg = document.getElementById('modalPreviewImg');
             if (receipt.photo) {
@@ -2059,11 +2540,11 @@
                 previewBox.style.display = 'none';
             }
 
-            document.getElementById('editModal').style.display = 'flex';
+            openModal('editModal');
         }
 
         function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
+            closeModal('editModal');
             activeEditReceipt = null;
         }
 
@@ -2112,7 +2593,9 @@
             saveCurrentUserReceipts(list);
         }
 
-        // 智能 AI 查账
+        // ==========================================
+        // 智能 AI 查账顾问
+        // ==========================================
         async function askAi() {
             const query = document.getElementById('aiQuery').value.trim();
             if (!query) return;
@@ -2187,7 +2670,6 @@
                         candidateChatModels = ["qwen-turbo"];
                     } else if (provider === "openrouter") {
                         endpoint = "https://openrouter.ai/api/v1/chat/completions";
-                        // 优先 Qwen 2.5，若免费额度轮换，自动无缝降级至 OpenRouter 官方当前活跃的免费大模型
                         candidateChatModels = [
                             "qwen/qwen-2.5-72b-instruct:free",
                             "google/gemma-4-31b-it:free",
@@ -2264,7 +2746,9 @@
             }
         }
 
-        // 设置弹窗
+        // ==========================================
+        // 设置抽屉
+        // ==========================================
         function openSettingsModal() {
             document.getElementById('engineSelect').value = getSelectedEngine();
             document.getElementById('geminiKeyInput').value = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
@@ -2277,18 +2761,17 @@
 
             onEngineChange(getSelectedEngine());
 
-            // 语言与接收邮箱
             const langSel = document.getElementById('langSelect');
             if (langSel) langSel.value = getCurrentLanguage();
 
             const fbEmailInput = document.getElementById('devFeedbackEmailInput');
             if (fbEmailInput) fbEmailInput.value = localStorage.getItem(FEEDBACK_EMAIL_STORAGE) || "";
 
-            document.getElementById('settingsModal').style.display = 'flex';
+            openModal('settingsModal');
         }
 
         function closeSettingsModal() {
-            document.getElementById('settingsModal').style.display = 'none';
+            closeModal('settingsModal');
         }
 
         function onEngineChange(val) {
@@ -2346,7 +2829,6 @@
             alert(t('alertSettingsSaved'));
         }
 
-        // 强制刷新并清除客户端缓存
         function forceRefreshApp() {
             if ('caches' in window) {
                 caches.keys().then(names => {
@@ -2357,13 +2839,15 @@
             window.location.href = cleanUrl + '?update=' + Date.now();
         }
 
+        // ==========================================
         // 意见反馈 (Feedback)
+        // ==========================================
         function openFeedbackModal() {
-            document.getElementById('feedbackModal').style.display = 'flex';
+            openModal('feedbackModal');
         }
 
         function closeFeedbackModal() {
-            document.getElementById('feedbackModal').style.display = 'none';
+            closeModal('feedbackModal');
             document.getElementById('fbContent').value = '';
         }
 
@@ -2393,7 +2877,7 @@
             allFb.unshift(feedbackItem);
             localStorage.setItem(FEEDBACK_STORAGE, JSON.stringify(allFb));
 
-            // 2. 尝试向电脑端后端同步 (如果电脑开着服务)
+            // 2. 尝试向电脑端后端同步
             try {
                 fetch('/api/feedback', {
                     method: 'POST',
@@ -2402,7 +2886,7 @@
                 }).catch(() => {});
             } catch(e) {}
 
-            // 3. Web3Forms 邮件直发 (手机端直连开发者邮箱，电脑即时接收)
+            // 3. Web3Forms 邮件直发
             const targetEmail = localStorage.getItem(FEEDBACK_EMAIL_STORAGE) || '';
             if (targetEmail) {
                 try {
@@ -2440,7 +2924,9 @@
             a.click();
         }
 
+        // ==========================================
         // 导出收据账单备份
+        // ==========================================
         function exportUserData() {
             const u = getCurrentUser();
             const list = getCurrentUserReceipts();
