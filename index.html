@@ -510,7 +510,7 @@
             line-height: 1.5;
         }
 
-        /* 5. 底部悬浮岛导航 (Floating Island Dock) */
+        /* 5. 底部悬浮岛导航 (Floating Island Dock - 完美对齐与防折行) */
         .island-dock {
             position: fixed;
             bottom: 22px;
@@ -519,48 +519,66 @@
             z-index: 900;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
-            padding: 7px 12px;
-            background: rgba(255, 255, 255, 0.88);
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.94);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.85);
             border-radius: var(--radius-pill);
             box-shadow: var(--dock-shadow);
-            max-width: 92vw;
+            max-width: 95vw;
+            box-sizing: border-box;
         }
         .dock-btn {
             background: transparent;
             border: none;
             color: var(--slate-navy);
-            padding: 8px 12px;
+            padding: 0 10px;
+            height: 44px;
             border-radius: 30px;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
             font-size: 13px;
             font-weight: 700;
             cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+            line-height: 1;
         }
         .dock-btn svg {
             color: var(--text-muted);
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
         }
         .dock-shutter-btn {
             background: linear-gradient(135deg, var(--primary), var(--primary-hover));
             color: #FFFFFF;
             border: none;
-            padding: 10px 18px;
+            padding: 0 18px;
+            height: 44px;
             border-radius: var(--radius-pill);
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 7px;
             font-size: 13.5px;
             font-weight: 800;
             cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
             box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+            line-height: 1;
         }
         .dock-shutter-btn svg {
             color: #FFFFFF;
+            width: 19px;
+            height: 19px;
+            flex-shrink: 0;
         }
 
         /* 6. 模态抽屉底板 (BottomSheets & Drawers) */
@@ -1672,8 +1690,8 @@
                 manualNewBtnText: "Manual Entry",
                 uploadLoading: "⏳ Compressing and parsing receipt via AI...",
                 dockListText: "Records",
-                dockCameraText: "Snap Receipt",
-                dockAiText: "AI Advisor",
+                dockCameraText: "Snap",
+                dockAiText: "Ask AI",
                 filterMoreBtnText: "Filter",
                 aiCardTitleText: "AI Financial Advisor",
                 aiQueryPlaceholder: "e.g. How much did I spend on dining this month?",
@@ -2991,6 +3009,7 @@
         // ==========================================
         function openFeedbackModal() {
             renderFeedbackHistoryUI();
+            syncAllFeedbacks();
             openModal('feedbackModal');
         }
 
@@ -3023,9 +3042,15 @@
                 const resp = await fetch(url + '/api/ping', { method: 'GET' });
                 const data = await resp.json();
                 if (data && data.status === 'ok') {
+                    // 测试成功立即自动持久化保存，免去用户漏点“保存设置”的烦恼！
+                    localStorage.setItem(BACKEND_URL_STORAGE, url);
+                    const emailInput = document.getElementById('devFeedbackEmailInput');
+                    if (emailInput && emailInput.value.trim()) {
+                        localStorage.setItem(FEEDBACK_EMAIL_STORAGE, emailInput.value.trim());
+                    }
                     if (resultEl) {
                         resultEl.style.color = '#16a34a';
-                        resultEl.innerText = isEn ? '✅ Connected to PC Backend! Feedback will be saved directly into PC feedback/ folder!' : '✅ 成功连通电脑端 C++ 后端！手机反馈将直达电脑本地 feedback/ 文件夹！';
+                        resultEl.innerText = isEn ? '✅ Connected to PC Backend! Configuration auto-saved, feedback will sync to PC feedback/ folder!' : '✅ 成功连通电脑端 C++ 后端！配置已自动保存，反馈将全设备同步并直达电脑本地 feedback/ 文件夹！';
                     }
                 } else {
                     throw new Error('Invalid response');
@@ -3033,7 +3058,13 @@
             } catch(err) {
                 if (resultEl) {
                     resultEl.style.color = '#dc2626';
-                    resultEl.innerText = (isEn ? '❌ Connection failed: ' : '❌ 无法连接到电脑: ') + err.message + (isEn ? ' (Ensure ReceiptAssistant.exe is running and on same Wi-Fi)' : ' (请确认电脑运行了 ReceiptAssistant.exe 且手机与电脑在同一 Wi-Fi)');
+                    let extraTip = '';
+                    if (window.location.protocol === 'https:' && url.startsWith('http:')) {
+                        extraTip = isEn ? ' (Note: Current page is HTTPS, desktop browsers block local HTTP requests due to Mixed Content. Please open http://localhost:9090 directly on PC, or use from mobile!)' : ' (提示: 电脑当前网页为 HTTPS，Chrome浏览器默认阻止访问本地未加密的 HTTP 服务。若在电脑使用，请直接在电脑浏览器打开 http://localhost:9090，手机端已不受此限制)';
+                    } else {
+                        extraTip = isEn ? ' (Ensure ReceiptAssistant.exe is running on PC and both devices are on same Wi-Fi)' : ' (请确认电脑运行了 ReceiptAssistant.exe 且手机与电脑在同一 Wi-Fi)';
+                    }
+                    resultEl.innerText = (isEn ? '❌ Connection failed: ' : '❌ 无法连接到电脑: ') + err.message + extraTip;
                 }
             }
         }
@@ -3199,7 +3230,7 @@
                 return;
             }
 
-            const targetEmail = localStorage.getItem(FEEDBACK_EMAIL_STORAGE) || 'laikhanjuan@gmail.com';
+            const targetEmail = localStorage.getItem(FEEDBACK_EMAIL_STORAGE) || 'laikhaixuan300@gmail.com';
             const subject = encodeURIComponent(`[收据管家反馈] ${type} - ${contact}`);
             const body = encodeURIComponent(
                 (isEn ? '【Receipt Butler - User Feedback】\n\n' : '【智能收据管家 - 用户意见反馈】\n\n') +
@@ -3215,14 +3246,57 @@
         }
 
         // ==========================================
-        // 本地历史反馈卡片流展开与渲染
+        // 全设备多端反馈历史双向同步引擎 (Multi-Device Sync)
         // ==========================================
+        async function syncAllFeedbacks() {
+            let localFb = [];
+            try { localFb = JSON.parse(localStorage.getItem(FEEDBACK_STORAGE)) || []; } catch(e) {}
+
+            let backendUrl = localStorage.getItem(BACKEND_URL_STORAGE) || '';
+            if (backendUrl.endsWith('/')) backendUrl = backendUrl.slice(0, -1);
+            const targetApi = backendUrl ? (backendUrl + '/api/feedbacks') : '/api/feedbacks';
+
+            try {
+                const resp = await fetch(targetApi, { method: 'GET' });
+                const serverFeedbacks = await resp.json();
+                if (Array.isArray(serverFeedbacks) && serverFeedbacks.length > 0) {
+                    const idMap = new Map();
+                    // 先存入服务器端记录 (电脑端权威库)
+                    serverFeedbacks.forEach(f => {
+                        const key = f.id || (f.time + '_' + f.content);
+                        idMap.set(key, f);
+                    });
+                    // 再存入本地记录，去重合并
+                    localFb.forEach(f => {
+                        const key = f.id || (f.time + '_' + f.content);
+                        if (!idMap.has(key)) idMap.set(key, f);
+                    });
+
+                    const merged = Array.from(idMap.values());
+                    // 按时间降序排序
+                    merged.sort((a, b) => {
+                        const tA = new Date(a.time).getTime() || 0;
+                        const tB = new Date(b.time).getTime() || 0;
+                        return tB - tA;
+                    });
+                    localStorage.setItem(FEEDBACK_STORAGE, JSON.stringify(merged));
+                }
+            } catch(e) {
+                console.log('Backend sync offline, showing local cached feedbacks:', e.message);
+            }
+            renderFeedbackHistoryUI();
+        }
+
         function toggleFeedbackHistoryView() {
             const listEl = document.getElementById('feedbackHistoryList');
             if (!listEl) return;
             const isShown = listEl.style.display === 'block';
             listEl.style.display = isShown ? 'none' : 'block';
-            renderFeedbackHistoryUI();
+            if (!isShown) {
+                syncAllFeedbacks();
+            } else {
+                renderFeedbackHistoryUI();
+            }
         }
 
         function renderFeedbackHistoryUI() {
@@ -3240,7 +3314,14 @@
                 return;
             }
 
-            listEl.innerHTML = allFb.map((fb, idx) => `
+            let html = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding:0 2px;">
+                    <span style="font-size:11.5px; font-weight:700; color:var(--text-muted);">${isEn ? 'Synced Across All Devices' : '🔄 已实现全设备同步'}</span>
+                    <button type="button" onclick="syncAllFeedbacks()" style="background:none; border:none; color:var(--primary); font-size:11.5px; cursor:pointer; font-weight:700;">🔄 ${isEn ? 'Sync Now' : '立即刷新同步'}</button>
+                </div>
+            `;
+
+            html += allFb.map((fb, idx) => `
                 <div class="fb-card">
                     <div class="fb-card-header">
                         <div>
@@ -3255,6 +3336,8 @@
                     <div class="fb-body">${escapeHtml(fb.content || '')}</div>
                 </div>
             `).join('');
+
+            listEl.innerHTML = html;
         }
 
         function deleteLocalFeedback(id) {
