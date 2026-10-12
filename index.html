@@ -6,7 +6,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="theme-color" content="#F8F9FA">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#F8F9FA" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0F172A" media="(prefers-color-scheme: dark)">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="manifest" href="manifest.json">
@@ -73,9 +75,12 @@
             z-index: 100;
             backdrop-filter: blur(18px);
             -webkit-backdrop-filter: blur(18px);
-            background: rgba(248, 249, 250, 0.85);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-            padding: 12px 18px;
+            background: rgba(248, 249, 250, 0.92);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding-top: calc(12px + env(safe-area-inset-top, 0px));
+            padding-bottom: 12px;
+            padding-left: calc(18px + env(safe-area-inset-left, 0px));
+            padding-right: calc(18px + env(safe-area-inset-right, 0px));
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -3042,7 +3047,7 @@
         // ==========================================
         function openFeedbackModal() {
             renderFeedbackHistoryUI();
-            syncAllFeedbacks(true);
+            syncAllFeedbacks(false);
             openModal('feedbackModal');
         }
 
@@ -3474,7 +3479,7 @@
             const isShown = listEl.style.display === 'block';
             listEl.style.display = isShown ? 'none' : 'block';
             if (!isShown) {
-                syncAllFeedbacks(true);
+                syncAllFeedbacks(false);
             } else {
                 renderFeedbackHistoryUI();
             }
@@ -3566,6 +3571,7 @@
                     console.log('Backend deletion will complete on next sync:', e.message);
                 }
             }
+            alert(isEn ? '✅ Feedback record deleted successfully!' : '✅ 反馈记录已删除！');
         }
 
         async function clearAllFeedbacks() {
