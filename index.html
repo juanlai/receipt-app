@@ -1563,6 +1563,19 @@
         const FEEDBACK_EMAIL_STORAGE = "receipt_app_feedback_email";
         const BACKEND_URL_STORAGE = "receipt_app_backend_url";
 
+        function getBackendUrl() {
+            let url = localStorage.getItem(BACKEND_URL_STORAGE) || '';
+            if (!url) {
+                // 如果当前页面不是由静态托管 github.io 或 本地 file: 打开，
+                // 说明当前页面就是由 C++ 服务端 (localhost, 局域网IP, 或 Cloudflare 公网隧道) 提供的！
+                if (window.location.protocol !== 'file:' && !window.location.hostname.endsWith('github.io')) {
+                    url = window.location.origin;
+                }
+            }
+            if (url.endsWith('/')) url = url.slice(0, -1);
+            return url;
+        }
+
         const CATEGORY_NAMES_EN = {
             "餐饮美食": "Food & Dining",
             "超市便利": "Groceries & Mart",
@@ -2929,8 +2942,18 @@
             const langSel = document.getElementById('langSelect');
             if (langSel) langSel.value = getCurrentLanguage();
 
+            // 电脑端服务地址
+            const backendInput = document.getElementById('backendUrlInput');
+            if (backendInput) {
+                backendInput.value = getBackendUrl();
+            }
+
+            const pingRes = document.getElementById('backendPingResult');
+            if (pingRes) pingRes.style.display = 'none';
+
+            // 接收反馈邮箱
             const fbEmailInput = document.getElementById('devFeedbackEmailInput');
-            if (fbEmailInput) fbEmailInput.value = localStorage.getItem(FEEDBACK_EMAIL_STORAGE) || "";
+            if (fbEmailInput) fbEmailInput.value = localStorage.getItem(FEEDBACK_EMAIL_STORAGE) || "laikhaixuan300@gmail.com";
 
             openModal('settingsModal');
         }
@@ -2983,15 +3006,25 @@
             const customUrl = document.getElementById('qwenCustomUrlInput').value.trim();
             if (customUrl) localStorage.setItem(QWEN_CUSTOM_URL_STORAGE, customUrl);
 
+            // 保存电脑端后端地址
+            const backendInput = document.getElementById('backendUrlInput');
+            if (backendInput) localStorage.setItem(BACKEND_URL_STORAGE, backendInput.value.trim());
+
+            // 保存接收反馈邮箱
             const fbEmail = document.getElementById('devFeedbackEmailInput').value.trim();
-            localStorage.setItem(FEEDBACK_EMAIL_STORAGE, fbEmail);
+            localStorage.setItem(FEEDBACK_EMAIL_STORAGE, fbEmail || 'laikhaixuan300@gmail.com');
 
             const lang = document.getElementById('langSelect').value;
-            switchAppLanguage(lang);
+            const curLang = getCurrentLanguage();
 
             updateEngineUI();
             closeSettingsModal();
-            alert(t('alertSettingsSaved'));
+
+            if (lang !== curLang) {
+                switchAppLanguage(lang);
+            } else {
+                alert(t('alertSettingsSaved'));
+            }
         }
 
         function forceRefreshApp() {
@@ -3009,7 +3042,7 @@
         // ==========================================
         function openFeedbackModal() {
             renderFeedbackHistoryUI();
-            syncAllFeedbacks();
+            syncAllFeedbacks(true);
             openModal('feedbackModal');
         }
 
@@ -3023,7 +3056,7 @@
         // ==========================================
         async function testBackendConnection() {
             const input = document.getElementById('backendUrlInput');
-            let url = (input ? input.value.trim() : '') || localStorage.getItem(BACKEND_URL_STORAGE) || '';
+            let url = (input ? input.value.trim() : '') || getBackendUrl();
             const isEn = getCurrentLanguage() === 'en';
 
             if (!url) {
@@ -3050,8 +3083,10 @@
                     }
                     if (resultEl) {
                         resultEl.style.color = '#16a34a';
-                        resultEl.innerText = isEn ? '✅ Connected to PC Backend! Configuration auto-saved, feedback will sync to PC feedback/ folder!' : '✅ 成功连通电脑端 C++ 后端！配置已自动保存，反馈将全设备同步并直达电脑本地 feedback/ 文件夹！';
+                        resultEl.innerText = isEn ? '✅ Connected to PC Backend! Configuration saved, feedback will sync to PC feedback/ folder!' : '✅ 成功连通电脑端 C++ 后端！配置已自动保存，反馈将全设备双向同步并直达电脑本地 feedback/ 文件夹！';
                     }
+                    // 连通成功后，自动在后台触发一次双向同步，把本地暂存的反馈全部上传！
+                    syncAllFeedbacks(false);
                 } else {
                     throw new Error('Invalid response');
                 }
@@ -3060,9 +3095,13 @@
                     resultEl.style.color = '#dc2626';
                     let extraTip = '';
                     if (window.location.protocol === 'https:' && url.startsWith('http:')) {
-                        extraTip = isEn ? ' (Note: Current page is HTTPS, desktop browsers block local HTTP requests due to Mixed Content. Please open http://localhost:9090 directly on PC, or use from mobile!)' : ' (提示: 电脑当前网页为 HTTPS，Chrome浏览器默认阻止访问本地未加密的 HTTP 服务。若在电脑使用，请直接在电脑浏览器打开 http://localhost:9090，手机端已不受此限制)';
+                        extraTip = isEn 
+                            ? ' (Note: Current page is HTTPS, desktop browsers block local HTTP requests due to Mixed Content. Please open http://localhost:9090 directly on PC, or use from mobile!)' 
+                            : ' (提示: 电脑当前网页为 HTTPS，Chrome/Edge浏览器默认安全阻止网页访问本地 http:// 服务。若在电脑使用，请直接在浏览器地址栏打开 http://localhost:9090 打开本应用，即可完美连接！)';
                     } else {
-                        extraTip = isEn ? ' (Ensure ReceiptAssistant.exe is running on PC and both devices are on same Wi-Fi)' : ' (请确认电脑运行了 ReceiptAssistant.exe 且手机与电脑在同一 Wi-Fi)';
+                        extraTip = isEn 
+                            ? ' (Ensure ReceiptAssistant.exe is running on PC and both devices are on same Wi-Fi)' 
+                            : ' (请确认电脑已启动 ReceiptAssistant.exe 且手机与电脑在同一 Wi-Fi)';
                     }
                     resultEl.innerText = (isEn ? '❌ Connection failed: ' : '❌ 无法连接到电脑: ') + err.message + extraTip;
                 }
@@ -3086,7 +3125,8 @@
                 type: type,
                 contact: contact || (isEn ? 'Anonymous' : '匿名'),
                 content: content,
-                userAgent: navigator.userAgent
+                userAgent: navigator.userAgent,
+                syncedToBackend: false
             };
 
             // 1. 保存在本机 LocalStorage
@@ -3096,26 +3136,35 @@
             localStorage.setItem(FEEDBACK_STORAGE, JSON.stringify(allFb));
             renderFeedbackHistoryUI();
 
-            // 2. 尝试向电脑端后端同步 (配置的电脑 IP 或同源)
+            // 2. 尝试向电脑端后端同步
             let backendSent = false;
-            let backendUrl = localStorage.getItem(BACKEND_URL_STORAGE) || '';
-            if (backendUrl.endsWith('/')) backendUrl = backendUrl.slice(0, -1);
-            const targetApi = backendUrl ? (backendUrl + '/api/feedback') : '/api/feedback';
+            let backendError = "";
+            let backendUrl = getBackendUrl();
 
-            try {
-                const resp = await fetch(targetApi, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(feedbackItem)
-                });
-                const resData = await resp.json();
-                if (resData && resData.success) {
-                    backendSent = true;
+            if (backendUrl) {
+                try {
+                    const resp = await fetch(backendUrl + '/api/feedback', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(feedbackItem)
+                    });
+                    const resData = await resp.json();
+                    if (resData && resData.success) {
+                        backendSent = true;
+                        feedbackItem.syncedToBackend = true;
+                        allFb[0] = feedbackItem;
+                        localStorage.setItem(FEEDBACK_STORAGE, JSON.stringify(allFb));
+                        renderFeedbackHistoryUI();
+                    } else {
+                        backendError = (resData && resData.message) ? resData.message : '服务器未返回成功标记';
+                    }
+                } catch(e) {
+                    backendError = e.message;
                 }
-            } catch(e) {}
+            }
 
-            // 3. Web3Forms 邮件直发 (如果配置了邮箱或 access key)
-            const targetEmail = localStorage.getItem(FEEDBACK_EMAIL_STORAGE) || '';
+            // 3. Web3Forms 邮件直发 (默认直发 laikhaixuan300@gmail.com)
+            const targetEmail = localStorage.getItem(FEEDBACK_EMAIL_STORAGE) || 'laikhaixuan300@gmail.com';
             if (targetEmail) {
                 try {
                     const isKey = targetEmail.length > 20 && !targetEmail.includes('@');
@@ -3133,11 +3182,21 @@
                 } catch(e) {}
             }
 
-            let successMsg = t('alertFbSuccess');
+            // 4. 给出清晰透明的结果弹窗提示
             if (backendSent) {
-                successMsg += isEn ? "\n(Synced to PC's feedback/ folder with human-readable text report!)" : "\n(已同步存入电脑 feedback/ 文件夹并生成人类语言报告！)";
+                alert(isEn 
+                    ? "✅ Feedback saved locally AND successfully written to PC's feedback/ folder!" 
+                    : "✅ 反馈已保存在本机，且已成功存入电脑 feedback/ 文件夹生成人类自然语言报告！");
+            } else if (backendUrl) {
+                alert(isEn 
+                    ? ("✅ Feedback saved locally!\n⚠️ PC backend sync pending (" + backendError + ").\nPlease ensure ReceiptAssistant.exe is running on PC. You can tap 'Sync Now' in Feedback History anytime to upload.") 
+                    : ("✅ 反馈已保存在本机！\n⚠️ 同步至电脑端失败 (" + backendError + ")。\n请确认电脑已启动 ReceiptAssistant.exe 并连接同一 Wi-Fi。稍后进入【查看历史反馈】点击【立即刷新同步】即可自动上传！"));
+            } else {
+                alert(isEn 
+                    ? "✅ Feedback saved locally! (To sync to PC feedback/ folder, enter your PC Backend URL in Settings)" 
+                    : "✅ 反馈已保存在本机！(若需同步至电脑 feedback/ 文件夹，请在【⚙️ 设置】中填入电脑端服务地址)");
             }
-            alert(successMsg);
+
             document.getElementById('fbContent').value = '';
             closeFeedbackModal();
         }
@@ -3195,7 +3254,7 @@
                 ? ["Index", "Submitted Time", "Feedback Category", "Contact", "Content", "Device Agent"]
                 : ["序号", "提交时间", "反馈类别", "联系方式", "反馈详细内容", "客户端设备"];
             
-            let csv = "\uFEFF" + header.join(",") + "\n"; // \uFEFF 写入 UTF-8 BOM，防止 Windows Excel 打开乱码
+            let csv = "\uFEFF" + header.join(",") + "\n";
             allFb.forEach((fb, idx) => {
                 const row = [
                     idx + 1,
@@ -3235,56 +3294,178 @@
             const body = encodeURIComponent(
                 (isEn ? '【Receipt Butler - User Feedback】\n\n' : '【智能收据管家 - 用户意见反馈】\n\n') +
                 (isEn ? 'Category: ' : '反馈类别: ') + type + '\n' +
-                (isEn ? 'Contact:  ' : '联系方式: ') + contact + '\n' +
-                (isEn ? 'Time:     ' : '提交时间: ') + new Date().toLocaleString() + '\n' +
-                (isEn ? 'Device:   ' : '设备环境: ') + navigator.userAgent + '\n\n' +
-                '-----------------------------------------\n' +
-                (isEn ? 'Content:\n' : '详细内容:\n') + content + '\n' +
-                '-----------------------------------------\n'
+                (isEn ? 'Contact: ' : '联系方式: ') + contact + '\n' +
+                (isEn ? 'Time: ' : '提交时间: ') + new Date().toLocaleString() + '\n' +
+                (isEn ? 'Device: ' : '客户端设备: ') + navigator.userAgent + '\n\n' +
+                (isEn ? 'Content:\n' : '反馈详细内容:\n') + content
             );
             window.location.href = `mailto:${targetEmail}?subject=${subject}&body=${body}`;
         }
 
         // ==========================================
-        // 全设备多端反馈历史双向同步引擎 (Multi-Device Sync)
+        // 全设备多端反馈历史双向同步引擎 (Two-Way Multi-Device Sync)
         // ==========================================
-        async function syncAllFeedbacks() {
+        async function syncAllFeedbacks(isManual = false) {
+            const isEn = getCurrentLanguage() === 'en';
             let localFb = [];
             try { localFb = JSON.parse(localStorage.getItem(FEEDBACK_STORAGE)) || []; } catch(e) {}
 
-            let backendUrl = localStorage.getItem(BACKEND_URL_STORAGE) || '';
-            if (backendUrl.endsWith('/')) backendUrl = backendUrl.slice(0, -1);
-            const targetApi = backendUrl ? (backendUrl + '/api/feedbacks') : '/api/feedbacks';
+            const FEEDBACK_DELETED_KEY = 'receipt_feedback_deleted_ids';
+            let pendingDeleteIds = [];
+            try { pendingDeleteIds = JSON.parse(localStorage.getItem(FEEDBACK_DELETED_KEY)) || []; } catch(e) {}
+
+            let backendUrl = getBackendUrl();
+            const syncStatusEl = document.getElementById('syncStatusIndicator');
+
+            if (!backendUrl) {
+                if (syncStatusEl) {
+                    syncStatusEl.innerText = isEn 
+                        ? '⚠️ Local cache only (Set PC URL in Settings)' 
+                        : '⚠️ 展示本机缓存 (请在设置中填入电脑IP以启用同步)';
+                    syncStatusEl.style.color = '#d97706';
+                }
+                if (isManual) {
+                    alert(isEn 
+                        ? '⚠️ PC Backend URL not set yet!\nPlease open Settings (⚙️), enter your PC IP (e.g. http://192.168.x.x:9090) and tap Test.' 
+                        : '⚠️ 尚未配置电脑端服务地址！\n请点击右上角【⚙️ 设置】，在【电脑端服务地址】中输入电脑 IP (如 http://192.168.x.x:9090) 并点击测试。');
+                }
+                return;
+            }
+
+            if (syncStatusEl) {
+                syncStatusEl.innerText = isEn ? '⏳ Syncing bidirectionally with PC...' : '⏳ 正在与电脑端进行双向同步...';
+                syncStatusEl.style.color = '#2563eb';
+            }
 
             try {
-                const resp = await fetch(targetApi, { method: 'GET' });
-                const serverFeedbacks = await resp.json();
-                if (Array.isArray(serverFeedbacks) && serverFeedbacks.length > 0) {
-                    const idMap = new Map();
-                    // 先存入服务器端记录 (电脑端权威库)
-                    serverFeedbacks.forEach(f => {
-                        const key = f.id || (f.time + '_' + f.content);
-                        idMap.set(key, f);
-                    });
-                    // 再存入本地记录，去重合并
-                    localFb.forEach(f => {
-                        const key = f.id || (f.time + '_' + f.content);
-                        if (!idMap.has(key)) idMap.set(key, f);
-                    });
+                // 仅筛选尚未同步到后端的本地记录 (防止误把电脑文件夹中已被用户物理删除的记录重新覆盖回传)
+                const unsyncedFb = localFb.filter(f => !f.syncedToBackend && !pendingDeleteIds.includes(f.id));
 
-                    const merged = Array.from(idMap.values());
-                    // 按时间降序排序
+                // 1. 首选快速批处理双向同步接口 (/api/feedbacks/sync)
+                let syncRes = await fetch(backendUrl + '/api/feedbacks/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ feedbacks: unsyncedFb, deletedIds: pendingDeleteIds })
+                });
+
+                let serverData = null;
+                if (syncRes.ok) {
+                    serverData = await syncRes.json();
+                }
+
+                // 2. 如果批处理接口可用
+                if (serverData && serverData.success && Array.isArray(serverData.feedbacks)) {
+                    // 同步成功后清除已同步的待删除 ID 队列
+                    localStorage.removeItem(FEEDBACK_DELETED_KEY);
+
+                    // 电脑磁盘返回的记录是全量权威库 (用户在电脑文件夹删掉的文件已自然被剔除)
+                    const serverFeedbacks = serverData.feedbacks.map(f => ({ ...f, syncedToBackend: true }));
+                    const serverIdSet = new Set(serverFeedbacks.map(f => f.id || (f.time + '_' + f.content)));
+
+                    // 合并：权威库 + 任何仍处于离线尚未成功入库的本地记录
+                    const remainingLocal = unsyncedFb.filter(f => !serverIdSet.has(f.id || (f.time + '_' + f.content)));
+                    const allMerged = [...serverFeedbacks, ...remainingLocal];
+
+                    allMerged.sort((a, b) => {
+                        const tA = new Date(a.time).getTime() || 0;
+                        const tB = new Date(b.time).getTime() || 0;
+                        return tB - tA;
+                    });
+                    localStorage.setItem(FEEDBACK_STORAGE, JSON.stringify(allMerged));
+                    renderFeedbackHistoryUI();
+
+                    const newCount = serverData.newSaved || 0;
+                    if (syncStatusEl) {
+                        syncStatusEl.innerText = isEn 
+                            ? `✅ Synced! Total ${allMerged.length} records across devices` 
+                            : `✅ 同步成功！全设备已合并 ${allMerged.length} 条记录 (新增上传 ${newCount} 条)`;
+                        syncStatusEl.style.color = '#16a34a';
+                    }
+                    if (isManual) {
+                        alert(isEn 
+                            ? ("✅ Multi-Device Feedback Sync Complete!\nTotal records: " + allMerged.length + "\nUploaded to PC feedback/ folder: " + newCount)
+                            : ("✅ 全设备反馈同步完成！\n全设备当前共有 " + allMerged.length + " 条反馈记录。\n本次成功上传 " + newCount + " 条记录至电脑 feedback/ 文件夹！"));
+                    }
+                    return;
+                }
+
+                // 3. 降级兼容：逐条上传未同步的本地记录 + GET /api/feedbacks
+                if (pendingDeleteIds.length > 0) {
+                    for (const delId of pendingDeleteIds) {
+                        try {
+                            await fetch(backendUrl + '/api/feedback/delete', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id: delId })
+                            });
+                        } catch(e) {}
+                    }
+                    localStorage.removeItem(FEEDBACK_DELETED_KEY);
+                }
+
+                let uploadedCount = 0;
+                for (const item of unsyncedFb) {
+                    try {
+                        const postRes = await fetch(backendUrl + '/api/feedback', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(item)
+                        });
+                        if (postRes.ok) {
+                            item.syncedToBackend = true;
+                            uploadedCount++;
+                        }
+                    } catch(e) {}
+                }
+
+                const getResp = await fetch(backendUrl + '/api/feedbacks', { method: 'GET' });
+                const serverFeedbacks = await getResp.json();
+                if (Array.isArray(serverFeedbacks)) {
+                    const serverItems = serverFeedbacks.map(f => ({ ...f, syncedToBackend: true }));
+                    const serverIdSet = new Set(serverItems.map(f => f.id || (f.time + '_' + f.content)));
+                    const remainingLocal = unsyncedFb.filter(f => !serverIdSet.has(f.id || (f.time + '_' + f.content)));
+                    const merged = [...serverItems, ...remainingLocal];
+
                     merged.sort((a, b) => {
                         const tA = new Date(a.time).getTime() || 0;
                         const tB = new Date(b.time).getTime() || 0;
                         return tB - tA;
                     });
                     localStorage.setItem(FEEDBACK_STORAGE, JSON.stringify(merged));
+                    renderFeedbackHistoryUI();
+
+                    if (syncStatusEl) {
+                        syncStatusEl.innerText = isEn 
+                            ? `✅ Synced! Total ${merged.length} records across devices` 
+                            : `✅ 同步成功！全设备已合并 ${merged.length} 条记录`;
+                        syncStatusEl.style.color = '#16a34a';
+                    }
+                    if (isManual) {
+                        alert(isEn 
+                            ? ("✅ Multi-Device Feedback Sync Complete!\nTotal: " + merged.length + " records across devices.") 
+                            : ("✅ 全设备反馈同步成功！\n全设备当前已合并 " + merged.length + " 条反馈记录。"));
+                    }
                 }
             } catch(e) {
-                console.log('Backend sync offline, showing local cached feedbacks:', e.message);
+                console.log('Backend sync offline:', e.message);
+                if (syncStatusEl) {
+                    syncStatusEl.innerText = (isEn ? '❌ Sync failed: ' : '❌ 无法同步电脑端: ') + e.message;
+                    syncStatusEl.style.color = '#dc2626';
+                }
+                if (isManual) {
+                    let errMsg = (isEn ? '❌ Failed to sync with PC backend: ' : '❌ 无法同步电脑端服务: ') + e.message;
+                    if (window.location.protocol === 'https:' && backendUrl.startsWith('http:')) {
+                        errMsg += isEn 
+                            ? '\n\n(Note: Browsers block local HTTP requests from HTTPS pages. If on PC, open http://localhost:9090 directly!)' 
+                            : '\n\n(提示: 电脑当前网页为 HTTPS，浏览器会安全拦截访问本地 http:// 服务。若在电脑使用，请直接在电脑浏览器打开 http://localhost:9090)';
+                    } else {
+                        errMsg += isEn 
+                            ? '\n\n(Please verify ReceiptAssistant.exe is running on PC and phone is connected to the same Wi-Fi or Cloudflare tunnel)' 
+                            : '\n\n(请确认电脑已启动 ReceiptAssistant.exe，且手机与电脑连接同一 Wi-Fi 或处于 Cloudflare 远程通道)';
+                    }
+                    alert(errMsg);
+                }
             }
-            renderFeedbackHistoryUI();
         }
 
         function toggleFeedbackHistoryView() {
@@ -3293,7 +3474,7 @@
             const isShown = listEl.style.display === 'block';
             listEl.style.display = isShown ? 'none' : 'block';
             if (!isShown) {
-                syncAllFeedbacks();
+                syncAllFeedbacks(true);
             } else {
                 renderFeedbackHistoryUI();
             }
@@ -3315,37 +3496,99 @@
             }
 
             let html = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding:0 2px;">
-                    <span style="font-size:11.5px; font-weight:700; color:var(--text-muted);">${isEn ? 'Synced Across All Devices' : '🔄 已实现全设备同步'}</span>
-                    <button type="button" onclick="syncAllFeedbacks()" style="background:none; border:none; color:var(--primary); font-size:11.5px; cursor:pointer; font-weight:700;">🔄 ${isEn ? 'Sync Now' : '立即刷新同步'}</button>
+                <div style="background:#F1F5F9; border-radius:10px; padding:8px 10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                    <span id="syncStatusIndicator" style="font-size:11.5px; font-weight:700; color:var(--text-muted);">${isEn ? '🔄 Multi-Device Sync Ready' : '🔄 已就绪全设备同步'}</span>
+                    <div style="display:flex; gap:6px;">
+                        <button type="button" onclick="syncAllFeedbacks(true)" style="background:#FFFFFF; border:1px solid #CBD5E1; border-radius:6px; color:var(--primary); font-size:11.5px; padding:3px 8px; cursor:pointer; font-weight:700;">🔄 ${isEn ? 'Sync Now' : '立即刷新同步'}</button>
+                        <button type="button" onclick="clearAllFeedbacks()" style="background:#FFFFFF; border:1px solid #FECACA; border-radius:6px; color:#DC2626; font-size:11.5px; padding:3px 8px; cursor:pointer; font-weight:700;" title="${isEn ? 'Clear all records on PC & local' : '彻底清空电脑磁盘与本机全部记录'}">🗑️ ${isEn ? 'Clear All' : '清空全部'}</button>
+                    </div>
                 </div>
             `;
 
-            html += allFb.map((fb, idx) => `
-                <div class="fb-card">
-                    <div class="fb-card-header">
-                        <div>
-                            <span class="fb-badge">${escapeHtml(fb.type || (isEn ? 'General' : '反馈'))}</span>
-                            <span style="font-weight:600; color:var(--slate-navy); margin-left:5px;">${escapeHtml(fb.contact || (isEn ? 'Anonymous' : '匿名'))}</span>
+            html += allFb.map((fb, idx) => {
+                const syncBadge = fb.syncedToBackend 
+                    ? `<span style="font-size:10px; background:#dcfce7; color:#15803d; padding:2px 6px; border-radius:6px; font-weight:700;">${isEn ? '☁️ Synced to PC' : '☁️ 已同步电脑'}</span>`
+                    : `<span style="font-size:10px; background:#fef9c3; color:#a16207; padding:2px 6px; border-radius:6px; font-weight:700;">${isEn ? '📱 Local Cache' : '📱 本地暂存'}</span>`;
+
+                return `
+                    <div class="fb-card">
+                        <div class="fb-card-header">
+                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                <span class="fb-badge">${escapeHtml(fb.type || (isEn ? 'General' : '反馈'))}</span>
+                                ${syncBadge}
+                                <span style="font-weight:600; color:var(--slate-navy); margin-left:2px;">${escapeHtml(fb.contact || (isEn ? 'Anonymous' : '匿名'))}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="fb-time">${escapeHtml(fb.time || '')}</span>
+                                <button type="button" onclick="deleteLocalFeedback('${fb.id}')" style="background:none; border:none; color:#ef4444; font-size:13px; font-weight:bold; cursor:pointer; padding:2px 6px;" title="删除">✕</button>
+                            </div>
                         </div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span class="fb-time">${escapeHtml(fb.time || '')}</span>
-                            <button type="button" onclick="deleteLocalFeedback('${fb.id}')" style="background:none; border:none; color:#ef4444; font-size:11px; cursor:pointer;" title="删除">✕</button>
-                        </div>
+                        <div class="fb-body">${escapeHtml(fb.content || '')}</div>
                     </div>
-                    <div class="fb-body">${escapeHtml(fb.content || '')}</div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             listEl.innerHTML = html;
         }
 
-        function deleteLocalFeedback(id) {
+        async function deleteLocalFeedback(id) {
+            const isEn = getCurrentLanguage() === 'en';
+            if (!confirm(isEn ? 'Delete this feedback record? (Will also delete corresponding files in PC feedback/ folder)' : '确定要删除这条反馈记录吗？\n（将同时在电脑 feedback/ 文件夹中彻底物理删除）')) {
+                return;
+            }
+
             let allFb = [];
             try { allFb = JSON.parse(localStorage.getItem(FEEDBACK_STORAGE)) || []; } catch(e) {}
             allFb = allFb.filter(f => f.id !== id);
             localStorage.setItem(FEEDBACK_STORAGE, JSON.stringify(allFb));
+
+            const FEEDBACK_DELETED_KEY = 'receipt_feedback_deleted_ids';
+            let delIds = [];
+            try { delIds = JSON.parse(localStorage.getItem(FEEDBACK_DELETED_KEY)) || []; } catch(e) {}
+            if (!delIds.includes(id)) delIds.push(id);
+            localStorage.setItem(FEEDBACK_DELETED_KEY, JSON.stringify(delIds));
+
             renderFeedbackHistoryUI();
+
+            let backendUrl = getBackendUrl();
+            if (backendUrl) {
+                try {
+                    const res = await fetch(backendUrl + '/api/feedback/delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id })
+                    });
+                    if (res.ok) {
+                        delIds = delIds.filter(x => x !== id);
+                        localStorage.setItem(FEEDBACK_DELETED_KEY, JSON.stringify(delIds));
+                    }
+                } catch(e) {
+                    console.log('Backend deletion will complete on next sync:', e.message);
+                }
+            }
+        }
+
+        async function clearAllFeedbacks() {
+            const isEn = getCurrentLanguage() === 'en';
+            if (!confirm(isEn 
+                ? '⚠️ Are you sure you want to delete ALL feedback records?\nThis will permanently delete all records from the PC feedback/ folder and local history.' 
+                : '⚠️ 确定要清空全部反馈记录吗？\n这将彻底清空电脑 feedback/ 文件夹中的所有记录文件及本机的历史记录。')) {
+                return;
+            }
+
+            localStorage.removeItem(FEEDBACK_STORAGE);
+            localStorage.removeItem('receipt_feedback_deleted_ids');
+
+            let backendUrl = getBackendUrl();
+            if (backendUrl) {
+                try {
+                    await fetch(backendUrl + '/api/feedback/clear_all', { method: 'POST' });
+                } catch(e) {
+                    console.log('Remote clear error:', e.message);
+                }
+            }
+            renderFeedbackHistoryUI();
+            alert(isEn ? '✅ All feedback records cleared!' : '✅ 所有反馈历史记录已清空！');
         }
 
         // ==========================================
