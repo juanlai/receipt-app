@@ -557,18 +557,19 @@
         <div class="header-top">
             <div class="logo-area">
                 <img src="icon.svg" class="logo-img" alt="Logo">
-                <h1>智能收据管家</h1>
+                <h1 id="appTitleHeader">智能收据管家</h1>
             </div>
             <div class="header-actions">
-                <button class="icon-btn" onclick="openFeedbackModal()">💬 反馈</button>
-                <button class="icon-btn" onclick="openSettingsModal()">⚙️ 设置</button>
+                <button class="icon-btn" id="langToggleBtn" onclick="toggleLanguage()">🌐 EN</button>
+                <button class="icon-btn" id="feedbackNavBtn" onclick="openFeedbackModal()">💬 反馈</button>
+                <button class="icon-btn" id="settingsNavBtn" onclick="openSettingsModal()">⚙️ 设置</button>
             </div>
         </div>
 
         <div class="user-switch-bar">
-            <span style="font-size:13px; font-weight:700;">👤 当前账本:</span>
+            <span style="font-size:13px; font-weight:700;" id="userSwitchLabel">👤 当前账本:</span>
             <select id="userSelect" class="user-select" onchange="onUserChange(this.value)"></select>
-            <button class="icon-btn" style="background:rgba(255,255,255,0.25);" onclick="addUser()">+ 新账本</button>
+            <button class="icon-btn" style="background:rgba(255,255,255,0.25);" id="newBookBtn" onclick="addUser()">+ 新账本</button>
         </div>
     </header>
 
@@ -577,20 +578,20 @@
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <span class="engine-badge" id="currentEngineBadge">🤖 当前引擎: Gemini</span>
-                <span style="font-size:12px; color:var(--text-muted); cursor:pointer;" onclick="openSettingsModal()">切换引擎 ➔</span>
+                <span style="font-size:12px; color:var(--text-muted); cursor:pointer;" id="switchEngineLink" onclick="openSettingsModal()">切换引擎 ➔</span>
             </div>
 
             <label for="cameraInput">
                 <div class="upload-area">
                     <div class="upload-icon">📸</div>
-                    <b>点击拍照或选择小票</b>
+                    <b id="uploadAreaTitle">点击拍照或选择小票</b>
                     <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;" id="uploadSubtext">支持智能识别或纯手动存图记账</p>
                 </div>
             </label>
             <input type="file" id="cameraInput" accept="image/*" capture="environment">
 
             <!-- 纯手动无图快速记账入口 -->
-            <button class="btn" style="background:#f1f5f9; color:#475569; margin-top:10px; font-size:13px; padding:10px;" onclick="openManualNewReceipt()">✍️ 不拍照，直接手动输入记账</button>
+            <button class="btn" style="background:#f1f5f9; color:#475569; margin-top:10px; font-size:13px; padding:10px;" id="manualNewBtn" onclick="openManualNewReceipt()">✍️ 不拍照，直接手动输入记账</button>
 
             <div id="uploadLoading" class="loading" style="display:none;">⏳ 正在处理收据中，请稍候...</div>
         </div>
@@ -599,19 +600,20 @@
         <div class="card" id="aiQueryCard">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <h3 style="font-size: 15.5px; font-weight:800; display:flex; align-items:center; gap:6px; color:var(--primary);" id="aiCardTitle">
-                    <span>🤖</span> <span>智能财务问账顾问</span>
+                    <span>🤖</span> <span id="aiCardTitleText">智能财务问账顾问</span>
                 </h3>
-                <span style="font-size:11px; font-weight:700; color:var(--primary-light); background:#eff6ff; padding:3px 9px; border-radius:12px;">支持问明细 · 查总额</span>
+                <span style="font-size:11px; font-weight:700; color:var(--primary-light); background:#eff6ff; padding:3px 9px; border-radius:12px;" id="aiCardBadge">支持问明细 · 查总额</span>
             </div>
 
             <div style="display:flex; gap:8px;">
                 <input type="text" id="aiQuery" class="search-input" placeholder="例如: 我买数码一共花了多少钱？" onkeydown="if(event.key==='Enter') askAi()">
-                <button class="btn btn-primary" style="width: auto; padding: 10px 18px; white-space:nowrap;" onclick="askAi()">提问</button>
+                <button class="btn btn-primary" style="width: auto; padding: 10px 18px; white-space:nowrap;" id="aiAskBtn" onclick="askAi()">提问</button>
             </div>
 
             <!-- 猜你想问快捷胶囊（Suggested Quick Chips） -->
-            <div class="ai-chips-scroll">
+            <div class="ai-chips-scroll" id="aiChipsContainer">
                 <button type="button" class="ai-chip" onclick="quickAsk('统计我最近的所有消费明细与总支出')">📊 消费总支出</button>
+                <button type="button" class="ai-chip" onclick="quickAsk('统计工作器材与备件(Spare Parts)的支出总额与明细')">🛠️ 器材备件对账</button>
                 <button type="button" class="ai-chip" onclick="quickAsk('我最近在超市和餐饮分别买了什么东西？')">🛒 买了什么商品</button>
                 <button type="button" class="ai-chip" onclick="quickAsk('哪一笔消费金额最高？买了什么？')">🔝 哪笔消费最贵</button>
                 <button type="button" class="ai-chip" onclick="quickAsk('餐饮美食一共消费了多少令吉？')">🍔 餐饮开销统计</button>
@@ -622,7 +624,7 @@
             <div id="aiLoading" class="ai-loading-container" style="display:none;">
                 <div class="ai-shimmer-bar"></div>
                 <div class="ai-loading-text">
-                    <span class="ai-pulse-dot"></span> 财务 AI 顾问正在翻阅账本、计算梳理中...
+                    <span class="ai-pulse-dot"></span> <span id="aiLoadingText">财务 AI 顾问正在翻阅账本、计算梳理中...</span>
                 </div>
             </div>
 
@@ -633,8 +635,8 @@
                         <span id="aiAnswerBotName">✨ 智能财务顾问分析</span>
                     </div>
                     <div class="ai-actions-bar">
-                        <button type="button" class="ai-mini-btn" onclick="copyAiAnswer()">📋 复制</button>
-                        <button type="button" class="ai-mini-btn" onclick="closeAiAnswer()">✕ 收起</button>
+                        <button type="button" class="ai-mini-btn" id="aiCopyBtn" onclick="copyAiAnswer()">📋 复制</button>
+                        <button type="button" class="ai-mini-btn" id="aiCloseBtn" onclick="closeAiAnswer()">✕ 收起</button>
                     </div>
                 </div>
                 <div id="aiAnswerBody" class="ai-answer-body"></div>
@@ -644,8 +646,8 @@
         <!-- 多维时间/分类/搜索筛选器 -->
         <div class="card" style="padding: 16px;">
             <div style="font-size: 13px; font-weight: 800; color: var(--primary); margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
-                <span>🔎 多维时光轴筛选 (年/月/日/类别)</span>
-                <button onclick="resetFilters()" style="background:none; border:none; color:var(--accent); font-size:12px; cursor:pointer; font-weight:700;">重置条件</button>
+                <span id="filterHeaderTitle">🔎 多维时光轴筛选 (年/月/日/类别)</span>
+                <button id="filterResetBtn" onclick="resetFilters()" style="background:none; border:none; color:var(--accent); font-size:12px; cursor:pointer; font-weight:700;">重置条件</button>
             </div>
             <div class="filter-grid">
                 <select id="filterYear" class="cat-select" onchange="applyFilters()">
@@ -669,8 +671,8 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <h3 style="font-size: 16px; font-weight:800;" id="listTitle">📋 收据清单</h3>
                 <div style="display:flex; gap:8px;">
-                    <button onclick="exportUserData()" style="background:none; border:none; color:var(--primary-light); font-size:12px; cursor:pointer; font-weight:600;">💾 导出备份</button>
-                    <button onclick="renderCurrentUser()" style="background:none; border:none; color:var(--primary-light); font-size:12px; cursor:pointer; font-weight:600;">🔄 刷新</button>
+                    <button id="exportBackupBtn" onclick="exportUserData()" style="background:none; border:none; color:var(--primary-light); font-size:12px; cursor:pointer; font-weight:600;">💾 导出备份</button>
+                    <button id="refreshListBtn" onclick="renderCurrentUser()" style="background:none; border:none; color:var(--primary-light); font-size:12px; cursor:pointer; font-weight:600;">🔄 刷新</button>
                 </div>
             </div>
             <!-- 英雄总览支出卡片 (Copilot Money 风格) -->
@@ -682,17 +684,17 @@
                 <div class="hero-spending-amount" id="totalAmount">RM 0.00</div>
                 <div class="hero-metrics-row">
                     <div class="hero-metric-item">
-                        <span class="hero-metric-sub">单笔最高</span>
+                        <span class="hero-metric-sub" id="heroMaxSub">单笔最高</span>
                         <span class="hero-metric-val" id="heroMaxAmount">RM 0.00</span>
                     </div>
                     <div class="hero-metric-divider"></div>
                     <div class="hero-metric-item">
-                        <span class="hero-metric-sub">笔均开销</span>
+                        <span class="hero-metric-sub" id="heroAvgSub">笔均开销</span>
                         <span class="hero-metric-val" id="heroAvgAmount">RM 0.00</span>
                     </div>
                     <div class="hero-metric-divider"></div>
                     <div class="hero-metric-item">
-                        <span class="hero-metric-sub">主要支出类别</span>
+                        <span class="hero-metric-sub" id="heroTopSub">主要支出类别</span>
                         <span class="hero-metric-val" id="heroTopCategory">无</span>
                     </div>
                 </div>
@@ -711,34 +713,34 @@
             </div>
 
             <div class="form-group">
-                <label>商家名称</label>
+                <label id="editMerchantLabel">商家名称</label>
                 <input type="text" id="editMerchant" class="form-control" placeholder="例如: Lotus's, 99 Speedmart, 餐厅">
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group">
-                    <label>实付总额 (RM)</label>
+                    <label id="editAmountLabel">实付总额 (RM)</label>
                     <input type="number" step="0.01" id="editAmount" class="form-control" placeholder="0.00">
                 </div>
                 <div class="form-group">
-                    <label>消费日期</label>
+                    <label id="editDateLabel">消费日期</label>
                     <input type="date" id="editDate" class="form-control">
                 </div>
             </div>
 
             <div class="form-group">
-                <label>消费分类</label>
+                <label id="editCategoryLabel">消费分类</label>
                 <select id="editCategory" class="form-control"></select>
             </div>
 
             <div class="form-group">
-                <label>商品明细 / 备注</label>
+                <label id="editNotesLabel">商品明细 / 备注</label>
                 <textarea id="editNotes" class="form-control" rows="2" placeholder="填写具体买了什么（例如: 2盒牛奶、全麦面包），方便后续 AI 查账回答！"></textarea>
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 18px;">
-                <button class="btn btn-primary" onclick="confirmSaveModal()">✓ 确认保存并归档</button>
-                <button class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+                <button class="btn btn-primary" id="confirmSaveBtn" onclick="confirmSaveModal()">✓ 确认保存并归档</button>
+                <button class="btn btn-secondary" id="cancelEditBtn" onclick="closeEditModal()">取消</button>
             </div>
         </div>
     </div>
@@ -746,10 +748,18 @@
     <!-- 模态框 2: 系统与 API 引擎设置 -->
     <div id="settingsModal" class="modal-overlay">
         <div class="modal-box">
-            <h3 style="font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 14px;">⚙️ AI 引擎与安全设置</h3>
+            <h3 style="font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 14px;" id="settingsModalTitle">⚙️ 系统设置与 AI 引擎</h3>
+
+            <div class="form-group">
+                <label id="i18n_langLabel">🌐 全局界面语言 / App Language</label>
+                <select id="langSelect" class="form-control" onchange="switchAppLanguage(this.value)">
+                    <option value="zh">🇨🇳 中文 (简体)</option>
+                    <option value="en">🇬🇧 English</option>
+                </select>
+            </div>
             
             <div class="form-group">
-                <label>选择识别模式 / AI 引擎</label>
+                <label id="i18n_engineLabel">选择识别模式 / AI 引擎</label>
                 <select id="engineSelect" class="form-control" onchange="onEngineChange(this.value)">
                     <option value="gemini">🔹 Google Gemini (多模态)</option>
                     <option value="qwen">🔹 通义千问 Qwen 2.5-VL (安全开源模型)</option>
@@ -758,13 +768,13 @@
             </div>
 
             <div id="geminiKeyGroup" class="form-group">
-                <label>Gemini API Key</label>
+                <label id="i18n_geminiKeyLabel">Gemini API Key</label>
                 <input type="password" id="geminiKeyInput" class="form-control" placeholder="输入你的 Gemini Key (AIzaSy...)">
-                <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">使用 Google 官方 gemini-1.5-flash 高速多模态模型</p>
+                <p style="font-size:11px; color:var(--text-muted); margin-top:4px;" id="i18n_geminiTip">使用 Google 官方 gemini 高速多模态模型 (每日免费 1500 次)</p>
             </div>
 
             <div id="qwenKeyGroup" class="form-group" style="display:none;">
-                <label>千问接口服务商</label>
+                <label id="i18n_qwenProvLabel">千问接口服务商</label>
                 <select id="qwenProviderSelect" class="form-control" onchange="onQwenProviderChange(this.value)">
                     <option value="openrouter">🌐 OpenRouter (马来西亚首选：Google一键登录，无需手机号，含免费版千问)</option>
                     <option value="siliconflow">⚡ 硅基流动 SiliconFlow (需中国大陆 +86 手机号)</option>
@@ -786,14 +796,22 @@
                 </p>
             </div>
 
+            <div class="form-group">
+                <label id="i18n_fbEmailLabel">📬 接收反馈的邮箱 (接收用户手机提交)</label>
+                <input type="email" id="devFeedbackEmailInput" class="form-control" placeholder="输入接收反馈的邮箱 (如: your_email@gmail.com)">
+                <p style="font-size:11px; color:var(--text-muted); margin-top:4px;" id="i18n_fbEmailTip">
+                    配置后，用户在手机端提交的反馈将通过 Web3Forms 免费直发至此邮箱，电脑即时查阅！
+                </p>
+            </div>
+
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
-                <button class="btn btn-secondary" onclick="closeSettingsModal()">关闭</button>
+                <button class="btn btn-primary" id="saveSettingsBtn" onclick="saveSettings()">保存设置</button>
+                <button class="btn btn-secondary" id="closeSettingsBtn" onclick="closeSettingsModal()">关闭</button>
             </div>
 
             <div style="border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 16px; text-align: center;">
-                <span style="font-size:12px; color:var(--text-muted);">版本: v1.2 (最新修复版)</span><br>
-                <button type="button" class="btn" style="background:#f1f5f9; color:#1e293b; margin-top:6px; font-size:12px; padding:8px;" onclick="forceRefreshApp()">🔄 强制清除缓存并同步最新版</button>
+                <span style="font-size:12px; color:var(--text-muted);" id="appVersionText">版本: v1.3 (双语国际化 & 商业器材支持)</span><br>
+                <button type="button" class="btn" style="background:#f1f5f9; color:#1e293b; margin-top:6px; font-size:12px; padding:8px;" id="forceRefreshBtn" onclick="forceRefreshApp()">🔄 强制清除缓存并同步最新版</button>
             </div>
         </div>
     </div>
@@ -801,11 +819,11 @@
     <!-- 模态框 3: 意见反馈 (Feedback) -->
     <div id="feedbackModal" class="modal-overlay">
         <div class="modal-box">
-            <h3 style="font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 14px;">💬 提交意见反馈</h3>
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">您的反馈将直接记录供开发者跟进与优化！</p>
+            <h3 style="font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 14px;" id="feedbackModalTitle">💬 提交意见反馈</h3>
+            <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;" id="feedbackModalSubtitle">您的反馈将直接记录供开发者跟进与优化！</p>
 
             <div class="form-group">
-                <label>反馈类别</label>
+                <label id="i18n_fbTypeLabel">反馈类别</label>
                 <select id="fbType" class="form-control">
                     <option value="功能建议">💡 功能改进与建议</option>
                     <option value="识别问题">🔍 收据识别不准确</option>
@@ -815,30 +833,35 @@
             </div>
 
             <div class="form-group">
-                <label>联系方式 (可选)</label>
+                <label id="i18n_fbContactLabel">联系方式 (可选)</label>
                 <input type="text" id="fbContact" class="form-control" placeholder="邮箱 / 微信号，方便跟进">
             </div>
 
             <div class="form-group">
-                <label>详细反馈内容</label>
+                <label id="i18n_fbContentLabel">详细反馈内容</label>
                 <textarea id="fbContent" class="form-control" rows="4" placeholder="请具体描述您的建议或遇到的问题..."></textarea>
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 18px;">
-                <button class="btn btn-primary" onclick="submitFeedback()">提交反馈</button>
-                <button class="btn btn-secondary" onclick="closeFeedbackModal()">取消</button>
+                <button class="btn btn-primary" id="submitFbBtn" onclick="submitFeedback()">提交反馈</button>
+                <button class="btn btn-secondary" id="closeFbBtn" onclick="closeFeedbackModal()">取消</button>
+            </div>
+
+            <div style="border-top:1px dashed var(--border-color); padding-top:12px; margin-top:14px; text-align:center;">
+                <button type="button" class="btn" style="background:#f1f5f9; color:#475569; font-size:12px; padding:7px;" id="exportFbBtn" onclick="exportFeedbackData()">📥 导出/查看本机历史反馈 (JSON)</button>
             </div>
         </div>
     </div>
 
     <script>
-        const categories = ["餐饮美食", "超市便利", "交通出行", "休闲娱乐", "医疗保健", "电子数码", "其他"];
+        const categories = ["餐饮美食", "超市便利", "交通出行", "工作器材与备件", "休闲娱乐", "医疗保健", "电子数码", "其他"];
 
         // 语义化分类视觉配置 (色彩心理学 & 扁平马卡龙调色)
         const CATEGORY_STYLES = {
             "餐饮美食": { icon: "🍔", color: "#b91c1c", bg: "#fee2e2", border: "#fca5a5" },
             "超市便利": { icon: "🛒", color: "#b45309", bg: "#fef3c7", border: "#fcd34d" },
             "交通出行": { icon: "🚗", color: "#0369a1", bg: "#e0f2fe", border: "#7dd3fc" },
+            "工作器材与备件": { icon: "🛠️", color: "#c2410c", bg: "#ffedd5", border: "#fdba74" },
             "休闲娱乐": { icon: "🎮", color: "#7e22ce", bg: "#f3e8ff", border: "#d8b4fe" },
             "医疗保健": { icon: "💊", color: "#15803d", bg: "#dcfce7", border: "#86efac" },
             "电子数码": { icon: "📱", color: "#4338ca", bg: "#e0e7ff", border: "#a5b4fc" },
@@ -846,7 +869,13 @@
         };
 
         function getCategoryMeta(cat) {
-            return CATEGORY_STYLES[cat] || CATEGORY_STYLES["其他"];
+            if (!cat) return CATEGORY_STYLES["其他"];
+            if (CATEGORY_STYLES[cat]) return CATEGORY_STYLES[cat];
+            const lower = String(cat).toLowerCase();
+            if (cat.includes("器材") || cat.includes("备件") || cat.includes("零件") || lower.includes("spare") || lower.includes("part") || lower.includes("tool") || cat.includes("五金") || cat.includes("机械") || cat.includes("工具")) {
+                return CATEGORY_STYLES["工作器材与备件"];
+            }
+            return CATEGORY_STYLES["其他"];
         }
 
         function escapeHtml(str) {
@@ -893,8 +922,8 @@
                 }
 
                 // 提示与省钱建议气泡 (💡, 建议, 提示等)
-                if (/^(💡|提示|建议|省钱建议|温馨提醒|小贴士|>\s*)/.test(trimmed)) {
-                    let tipText = trimmed.replace(/^(💡|提示|建议|省钱建议|温馨提醒|小贴士|>\s*)[:：]?\s*/, '');
+                if (/^(💡|提示|建议|省钱建议|温馨提醒|小贴士|Advice|Tip|Suggestion|>\s*)/i.test(trimmed)) {
+                    let tipText = trimmed.replace(/^(💡|提示|建议|省钱建议|温馨提醒|小贴士|Advice|Tip|Suggestion|>\s*)[:：]?\s*/i, '');
                     tipText = formatInlineMarkdown(tipText);
                     html += '<div class="ai-tip-box"><span style="font-size:16px; flex-shrink:0;">💡</span><div>' + tipText + '</div></div>\n';
                     return;
@@ -955,6 +984,488 @@
         const QWEN_PROVIDER_STORAGE = "receipt_app_qwen_provider";
         const QWEN_CUSTOM_URL_STORAGE = "receipt_app_qwen_custom_url";
         const FEEDBACK_STORAGE = "receipt_app_local_feedback_list";
+        const LANG_STORAGE_KEY = "receipt_app_language";
+        const FEEDBACK_EMAIL_STORAGE = "receipt_app_feedback_email";
+
+        // 全局多语言词典 (中英文双语)
+        const CATEGORY_NAMES_EN = {
+            "餐饮美食": "Food & Dining",
+            "超市便利": "Groceries & Mart",
+            "交通出行": "Transport & Fuel",
+            "工作器材与备件": "Equipment & Spare Parts",
+            "休闲娱乐": "Leisure & Entertainment",
+            "医疗保健": "Health & Medical",
+            "电子数码": "Electronics & Digital",
+            "其他": "Others"
+        };
+
+        function getCurrentLanguage() {
+            return localStorage.getItem(LANG_STORAGE_KEY) || "zh";
+        }
+
+        function getCategoryDisplayName(cat) {
+            if (!cat) return getCurrentLanguage() === 'en' ? 'Others' : '其他';
+            if (getCurrentLanguage() === 'en') {
+                return CATEGORY_NAMES_EN[cat] || cat;
+            }
+            return cat;
+        }
+
+        const I18N = {
+            zh: {
+                appTitle: "智能收据管家",
+                langToggle: "🌐 EN",
+                feedbackNav: "💬 反馈",
+                settingsNav: "⚙️ 设置",
+                userSwitchLabel: "👤 当前账本:",
+                newBookBtn: "+ 新账本",
+                switchEngineLink: "切换引擎 ➔",
+                uploadAreaTitle: "点击拍照或选择小票",
+                uploadSubtext: "支持智能识别或纯手动存图记账",
+                manualNewBtn: "✍️ 不拍照，直接手动输入记账",
+                uploadLoading: "⏳ 正在处理收据中，请稍候...",
+                aiCardTitleText: "智能财务问账顾问",
+                aiCardBadge: "支持问明细 · 查总额",
+                aiQueryPlaceholder: "例如: 我买数码一共花了多少钱？",
+                aiAskBtn: "提问",
+                aiLoadingText: "财务 AI 顾问正在翻阅账本、计算梳理中...",
+                aiAnswerHeader: "✨ 智能财务顾问分析",
+                aiCopyBtn: "📋 复制",
+                aiCopied: "✅ 已复制",
+                aiCloseBtn: "✕ 收起",
+                filterHeaderTitle: "🔎 多维时光轴筛选 (年/月/日/类别)",
+                filterResetBtn: "重置条件",
+                filterAllYears: "📅 所有年份",
+                filterAllMonths: "📆 所有月份",
+                filterAllCats: "🏷️ 所有消费类别",
+                filterKeywordPlaceholder: "🔍 快速搜索商家名或商品...",
+                exportBackupBtn: "💾 导出备份",
+                refreshListBtn: "🔄 刷新",
+                heroPeriodDefault: "📊 支出总览",
+                heroMaxSub: "单笔最高",
+                heroAvgSub: "笔均开销",
+                heroTopSub: "主要支出类别",
+                heroNone: "无",
+                emptyTitle: "暂无收据记录",
+                emptyFilteredSub: "未找到符合条件的账单，可尝试重置筛选",
+                emptyInitialSub: "点击上方“拍照识别”或“手动输入”开始第一笔记账吧",
+                editModalNewTitle: "📋 核对收据信息",
+                editModalEditTitle: "✏️ 修改收据信息",
+                editMerchantLabel: "商家名称",
+                editMerchantPlaceholder: "例如: Lotus's, 99 Speedmart, 餐厅",
+                editAmountLabel: "实付总额 (RM)",
+                editDateLabel: "消费日期",
+                editCategoryLabel: "消费分类",
+                editNotesLabel: "商品明细 / 备注",
+                editNotesPlaceholder: "填写具体买了什么（例如: 2盒牛奶、全麦面包），方便后续 AI 查账回答！",
+                confirmSaveBtn: "✓ 确认保存并归档",
+                cancelEditBtn: "取消",
+                settingsModalTitle: "⚙️ 系统设置与 AI 引擎",
+                i18n_langLabel: "🌐 全局界面语言 / App Language",
+                i18n_engineLabel: "选择识别模式 / AI 引擎",
+                i18n_geminiKeyLabel: "Gemini API Key",
+                geminiKeyPlaceholder: "输入你的 Gemini Key (AIzaSy...)",
+                i18n_geminiTip: "使用 Google 官方 gemini 高速多模态模型 (每日免费 1500 次)",
+                i18n_qwenProvLabel: "千问接口服务商",
+                qwenKeyPlaceholder: "输入对应平台的 API Key (sk-...)",
+                i18n_fbEmailLabel: "📬 接收反馈的邮箱 (接收用户手机提交)",
+                fbEmailPlaceholder: "输入接收反馈的邮箱 (如: your_email@gmail.com)",
+                i18n_fbEmailTip: "配置后，用户在手机端提交的反馈将通过 Web3Forms 免费直发至此邮箱，电脑即时查阅！",
+                saveSettingsBtn: "保存设置",
+                closeSettingsBtn: "关闭",
+                appVersionText: "版本: v1.3 (双语国际化 & 商业器材支持)",
+                forceRefreshBtn: "🔄 强制清除缓存并同步最新版",
+                feedbackModalTitle: "💬 提交意见反馈",
+                feedbackModalSubtitle: "您的反馈将直接记录供开发者跟进与优化！",
+                i18n_fbTypeLabel: "反馈类别",
+                i18n_fbContactLabel: "联系方式 (可选)",
+                fbContactPlaceholder: "邮箱 / 微信号，方便跟进",
+                i18n_fbContentLabel: "详细反馈内容",
+                fbContentPlaceholder: "请具体描述您的建议或遇到的问题...",
+                submitFbBtn: "提交反馈",
+                closeFbBtn: "取消",
+                exportFbBtn: "📥 导出/查看本机历史反馈 (JSON)",
+                alertSettingsSaved: "✅ 设置已保存！",
+                alertSavedSuccess: "✅ 收据已成功保存！",
+                alertUpdatedSuccess: "✅ 收据修改成功！",
+                confirmDeleteReceipt: "确定删除此条收据吗？",
+                alertEnterContent: "请输入您的反馈内容！",
+                alertFbSuccess: "💌 感谢您的宝贵反馈！已成功提交！",
+                alertNoLocalFb: "本机暂无已提交的反馈记录。",
+                promptNewLedger: "请输入新账本的名字（例如: 个人日常 / 爸爸 / 装修专用）:",
+                alertLedgerExists: "该账本已存在！",
+                alertEmptyLedgerForAi: "账本暂无收据，请先记一笔账！",
+                alertNeedGeminiKey: "请先点击右上角【⚙️ 设置】配置您的 Gemini API Key！",
+                alertNeedQwenKey: "请先点击右上角【⚙️ 设置】配置您的千问 API Key！"
+            },
+            en: {
+                appTitle: "Receipt AI Manager",
+                langToggle: "🌐 中文",
+                feedbackNav: "💬 Feedback",
+                settingsNav: "⚙️ Settings",
+                userSwitchLabel: "👤 Ledger:",
+                newBookBtn: "+ New Ledger",
+                switchEngineLink: "Change Engine ➔",
+                uploadAreaTitle: "Tap to Snap or Upload Receipt",
+                uploadSubtext: "Supports AI auto-recognition & manual photo entry",
+                manualNewBtn: "✍️ Manual Entry (No Camera)",
+                uploadLoading: "⏳ Processing receipt, please wait...",
+                aiCardTitleText: "AI Financial Advisor",
+                aiCardBadge: "Ask Items · Totals",
+                aiQueryPlaceholder: "e.g. How much did I spend on dining this month?",
+                aiAskBtn: "Ask AI",
+                aiLoadingText: "Financial AI advisor is reviewing ledgers & calculating...",
+                aiAnswerHeader: "✨ AI Financial Insights",
+                aiCopyBtn: "📋 Copy",
+                aiCopied: "✅ Copied",
+                aiCloseBtn: "✕ Close",
+                filterHeaderTitle: "🔎 Multi-Filter (Year / Month / Date / Cat)",
+                filterResetBtn: "Reset",
+                filterAllYears: "📅 All Years",
+                filterAllMonths: "📆 All Months",
+                filterAllCats: "🏷️ All Categories",
+                filterKeywordPlaceholder: "🔍 Search merchant or item notes...",
+                exportBackupBtn: "💾 Export Backup",
+                refreshListBtn: "🔄 Refresh",
+                heroPeriodDefault: "📊 Expense Overview",
+                heroMaxSub: "Single Max",
+                heroAvgSub: "Average",
+                heroTopSub: "Top Category",
+                heroNone: "None",
+                emptyTitle: "No Receipts Yet",
+                emptyFilteredSub: "No matching records found, try resetting filters",
+                emptyInitialSub: "Tap 'Snap Receipt' or 'Manual Entry' above to add your first receipt",
+                editModalNewTitle: "📋 Verify Receipt Details",
+                editModalEditTitle: "✏️ Edit Receipt Details",
+                editMerchantLabel: "Merchant Name",
+                editMerchantPlaceholder: "e.g. Lotus's, 99 Speedmart, Restaurant",
+                editAmountLabel: "Total Net Paid (RM)",
+                editDateLabel: "Expense Date",
+                editCategoryLabel: "Category",
+                editNotesLabel: "Items / Notes",
+                editNotesPlaceholder: "Specify items purchased (e.g. 2 milks, bread, spare parts) for AI lookup!",
+                confirmSaveBtn: "✓ Save & Archive",
+                cancelEditBtn: "Cancel",
+                settingsModalTitle: "⚙️ Settings & AI Engine",
+                i18n_langLabel: "🌐 App Language / 全局界面语言",
+                i18n_engineLabel: "OCR / AI Engine Mode",
+                i18n_geminiKeyLabel: "Gemini API Key",
+                geminiKeyPlaceholder: "Enter your Gemini Key (AIzaSy...)",
+                i18n_geminiTip: "Google official Gemini multimodal model (free 1500 req/day)",
+                i18n_qwenProvLabel: "Qwen API Provider",
+                qwenKeyPlaceholder: "Enter platform API Key (sk-...)",
+                i18n_fbEmailLabel: "📬 Feedback Forwarding Email",
+                fbEmailPlaceholder: "Enter email to receive feedback (e.g. your_email@gmail.com)",
+                i18n_fbEmailTip: "When configured, feedback submitted from mobile is forwarded free via Web3Forms straight to your PC!",
+                saveSettingsBtn: "Save Settings",
+                closeSettingsBtn: "Close",
+                appVersionText: "Version: v1.3 (Bilingual & Equipment Support)",
+                forceRefreshBtn: "🔄 Force Clear Cache & Sync Latest",
+                feedbackModalTitle: "💬 Submit User Feedback",
+                feedbackModalSubtitle: "Your feedback is directly recorded for developer optimization!",
+                i18n_fbTypeLabel: "Feedback Category",
+                i18n_fbContactLabel: "Contact Info (Optional)",
+                fbContactPlaceholder: "Email or phone for follow-up",
+                i18n_fbContentLabel: "Detailed Feedback",
+                fbContentPlaceholder: "Please describe your suggestions or issues...",
+                submitFbBtn: "Submit Feedback",
+                closeFbBtn: "Cancel",
+                exportFbBtn: "📥 Export / View Local Feedback (JSON)",
+                alertSettingsSaved: "✅ Settings saved successfully!",
+                alertSavedSuccess: "✅ Receipt saved successfully!",
+                alertUpdatedSuccess: "✅ Receipt updated successfully!",
+                confirmDeleteReceipt: "Are you sure you want to delete this receipt?",
+                alertEnterContent: "Please enter your feedback content!",
+                alertFbSuccess: "💌 Thank you for your feedback! Successfully submitted!",
+                alertNoLocalFb: "No feedback recorded on this device yet.",
+                promptNewLedger: "Enter new ledger name (e.g. Daily / Business / Renovation):",
+                alertLedgerExists: "Ledger already exists!",
+                alertEmptyLedgerForAi: "No receipts in current ledger yet, please add one first!",
+                alertNeedGeminiKey: "Please configure your Gemini API Key in Settings first!",
+                alertNeedQwenKey: "Please configure your Qwen API Key in Settings first!"
+            }
+        };
+
+        function t(key) {
+            const lang = getCurrentLanguage();
+            const dict = I18N[lang] || I18N.zh;
+            return dict[key] !== undefined ? dict[key] : (I18N.zh[key] || key);
+        }
+
+        function toggleLanguage() {
+            const cur = getCurrentLanguage();
+            const next = cur === 'zh' ? 'en' : 'zh';
+            switchAppLanguage(next);
+        }
+
+        function switchAppLanguage(lang) {
+            localStorage.setItem(LANG_STORAGE_KEY, lang);
+            const sel = document.getElementById('langSelect');
+            if (sel && sel.value !== lang) sel.value = lang;
+            applyLanguage();
+        }
+
+        function applyLanguage() {
+            const isEn = getCurrentLanguage() === 'en';
+
+            // 头部
+            const appTitleHeader = document.getElementById('appTitleHeader');
+            if (appTitleHeader) appTitleHeader.innerText = t('appTitle');
+
+            const langToggleBtn = document.getElementById('langToggleBtn');
+            if (langToggleBtn) langToggleBtn.innerText = t('langToggle');
+
+            const feedbackNavBtn = document.getElementById('feedbackNavBtn');
+            if (feedbackNavBtn) feedbackNavBtn.innerText = t('feedbackNav');
+
+            const settingsNavBtn = document.getElementById('settingsNavBtn');
+            if (settingsNavBtn) settingsNavBtn.innerText = t('settingsNav');
+
+            const userSwitchLabel = document.getElementById('userSwitchLabel');
+            if (userSwitchLabel) userSwitchLabel.innerText = t('userSwitchLabel');
+
+            const newBookBtn = document.getElementById('newBookBtn');
+            if (newBookBtn) newBookBtn.innerText = t('newBookBtn');
+
+            // 记账卡片
+            const switchEngineLink = document.getElementById('switchEngineLink');
+            if (switchEngineLink) switchEngineLink.innerText = t('switchEngineLink');
+
+            const uploadAreaTitle = document.getElementById('uploadAreaTitle');
+            if (uploadAreaTitle) uploadAreaTitle.innerText = t('uploadAreaTitle');
+
+            const manualNewBtn = document.getElementById('manualNewBtn');
+            if (manualNewBtn) manualNewBtn.innerText = t('manualNewBtn');
+
+            const uploadLoading = document.getElementById('uploadLoading');
+            if (uploadLoading) uploadLoading.innerText = t('uploadLoading');
+
+            // AI 查账卡片
+            const aiCardTitleText = document.getElementById('aiCardTitleText');
+            if (aiCardTitleText) aiCardTitleText.innerText = t('aiCardTitleText');
+
+            const aiCardBadge = document.getElementById('aiCardBadge');
+            if (aiCardBadge) aiCardBadge.innerText = t('aiCardBadge');
+
+            const aiQuery = document.getElementById('aiQuery');
+            if (aiQuery) aiQuery.placeholder = t('aiQueryPlaceholder');
+
+            const aiAskBtn = document.getElementById('aiAskBtn');
+            if (aiAskBtn) aiAskBtn.innerText = t('aiAskBtn');
+
+            const aiLoadingText = document.getElementById('aiLoadingText');
+            if (aiLoadingText) aiLoadingText.innerText = t('aiLoadingText');
+
+            const aiCopyBtn = document.getElementById('aiCopyBtn');
+            if (aiCopyBtn) aiCopyBtn.innerText = t('aiCopyBtn');
+
+            const aiCloseBtn = document.getElementById('aiCloseBtn');
+            if (aiCloseBtn) aiCloseBtn.innerText = t('aiCloseBtn');
+
+            // 猜你想问快捷胶囊
+            const chipsContainer = document.getElementById('aiChipsContainer');
+            if (chipsContainer) {
+                if (isEn) {
+                    chipsContainer.innerHTML = `
+                        <button type="button" class="ai-chip" onclick="quickAsk('Summarize my recent total expenses and all receipt breakdown')">📊 Total Spending</button>
+                        <button type="button" class="ai-chip" onclick="quickAsk('Summarize business equipment and spare parts expenses and items for audit')">🛠️ Spare Parts Audit</button>
+                        <button type="button" class="ai-chip" onclick="quickAsk('What items did I purchase recently in supermarket and dining?')">🛒 Purchased Items</button>
+                        <button type="button" class="ai-chip" onclick="quickAsk('Which expense was the highest and what was purchased?')">🔝 Highest Expense</button>
+                        <button type="button" class="ai-chip" onclick="quickAsk('How much total RM did I spend on Food & Dining?')">🍔 Dining Expenses</button>
+                        <button type="button" class="ai-chip" onclick="quickAsk('Analyze my current spending habits and provide money saving tips')">💡 Savings Advice</button>
+                    `;
+                } else {
+                    chipsContainer.innerHTML = `
+                        <button type="button" class="ai-chip" onclick="quickAsk('统计我最近的所有消费明细与总支出')">📊 消费总支出</button>
+                        <button type="button" class="ai-chip" onclick="quickAsk('统计工作器材与备件(Spare Parts)的支出总额与明细')">🛠️ 器材备件对账</button>
+                        <button type="button" class="ai-chip" onclick="quickAsk('我最近在超市和餐饮分别买了什么东西？')">🛒 买了什么商品</button>
+                        <button type="button" class="ai-chip" onclick="quickAsk('哪一笔消费金额最高？买了什么？')">🔝 哪笔消费最贵</button>
+                        <button type="button" class="ai-chip" onclick="quickAsk('餐饮美食一共消费了多少令吉？')">🍔 餐饮开销统计</button>
+                        <button type="button" class="ai-chip" onclick="quickAsk('帮我分析目前的消费习惯并给出省钱建议')">💡 财务省钱建议</button>
+                    `;
+                }
+            }
+
+            // 筛选器
+            const filterHeaderTitle = document.getElementById('filterHeaderTitle');
+            if (filterHeaderTitle) filterHeaderTitle.innerText = t('filterHeaderTitle');
+
+            const filterResetBtn = document.getElementById('filterResetBtn');
+            if (filterResetBtn) filterResetBtn.innerText = t('filterResetBtn');
+
+            const filterKeyword = document.getElementById('filterKeyword');
+            if (filterKeyword) filterKeyword.placeholder = t('filterKeywordPlaceholder');
+
+            // 收据列表头部与 Hero
+            const exportBackupBtn = document.getElementById('exportBackupBtn');
+            if (exportBackupBtn) exportBackupBtn.innerText = t('exportBackupBtn');
+
+            const refreshListBtn = document.getElementById('refreshListBtn');
+            if (refreshListBtn) refreshListBtn.innerText = t('refreshListBtn');
+
+            const heroMaxSub = document.getElementById('heroMaxSub');
+            if (heroMaxSub) heroMaxSub.innerText = t('heroMaxSub');
+
+            const heroAvgSub = document.getElementById('heroAvgSub');
+            if (heroAvgSub) heroAvgSub.innerText = t('heroAvgSub');
+
+            const heroTopSub = document.getElementById('heroTopSub');
+            if (heroTopSub) heroTopSub.innerText = t('heroTopSub');
+
+            // 编辑模态框
+            if (document.getElementById('editMerchantLabel')) document.getElementById('editMerchantLabel').innerText = t('editMerchantLabel');
+            if (document.getElementById('editMerchant')) document.getElementById('editMerchant').placeholder = t('editMerchantPlaceholder');
+            if (document.getElementById('editAmountLabel')) document.getElementById('editAmountLabel').innerText = t('editAmountLabel');
+            if (document.getElementById('editDateLabel')) document.getElementById('editDateLabel').innerText = t('editDateLabel');
+            if (document.getElementById('editCategoryLabel')) document.getElementById('editCategoryLabel').innerText = t('editCategoryLabel');
+            if (document.getElementById('editNotesLabel')) document.getElementById('editNotesLabel').innerText = t('editNotesLabel');
+            if (document.getElementById('editNotes')) document.getElementById('editNotes').placeholder = t('editNotesPlaceholder');
+            if (document.getElementById('confirmSaveBtn')) document.getElementById('confirmSaveBtn').innerText = t('confirmSaveBtn');
+            if (document.getElementById('cancelEditBtn')) document.getElementById('cancelEditBtn').innerText = t('cancelEditBtn');
+
+            // 设置模态框
+            const settingsModalTitle = document.getElementById('settingsModalTitle');
+            if (settingsModalTitle) settingsModalTitle.innerText = t('settingsModalTitle');
+
+            const i18n_langLabel = document.getElementById('i18n_langLabel');
+            if (i18n_langLabel) i18n_langLabel.innerText = t('i18n_langLabel');
+
+            const i18n_engineLabel = document.getElementById('i18n_engineLabel');
+            if (i18n_engineLabel) i18n_engineLabel.innerText = t('i18n_engineLabel');
+
+            const engSel = document.getElementById('engineSelect');
+            if (engSel) {
+                const prevEng = engSel.value;
+                if (isEn) {
+                    engSel.innerHTML = `
+                        <option value="gemini">🔹 Google Gemini (Multimodal)</option>
+                        <option value="qwen">🔹 Qwen 2.5-VL (Open Source Model)</option>
+                        <option value="manual">✍️ Manual Photo Entry (No AI, Zero Data)</option>
+                    `;
+                } else {
+                    engSel.innerHTML = `
+                        <option value="gemini">🔹 Google Gemini (多模态)</option>
+                        <option value="qwen">🔹 通义千问 Qwen 2.5-VL (安全开源模型)</option>
+                        <option value="manual">✍️ 纯手动拍照记账 (无 AI，0 流量消耗)</option>
+                    `;
+                }
+                engSel.value = prevEng;
+            }
+
+            const i18n_geminiKeyLabel = document.getElementById('i18n_geminiKeyLabel');
+            if (i18n_geminiKeyLabel) i18n_geminiKeyLabel.innerText = t('i18n_geminiKeyLabel');
+
+            const geminiKeyInput = document.getElementById('geminiKeyInput');
+            if (geminiKeyInput) geminiKeyInput.placeholder = t('geminiKeyPlaceholder');
+
+            const i18n_geminiTip = document.getElementById('i18n_geminiTip');
+            if (i18n_geminiTip) i18n_geminiTip.innerText = t('i18n_geminiTip');
+
+            const i18n_qwenProvLabel = document.getElementById('i18n_qwenProvLabel');
+            if (i18n_qwenProvLabel) i18n_qwenProvLabel.innerText = t('i18n_qwenProvLabel');
+
+            const qwenProvSel = document.getElementById('qwenProviderSelect');
+            if (qwenProvSel) {
+                const prevProv = qwenProvSel.value;
+                if (isEn) {
+                    qwenProvSel.innerHTML = `
+                        <option value="openrouter">🌐 OpenRouter (Recommended: Google login, no phone needed, free Qwen)</option>
+                        <option value="siliconflow">⚡ SiliconFlow (Requires China +86 phone)</option>
+                        <option value="dashscope">🏛️ DashScope Official (Requires China +86 phone)</option>
+                        <option value="custom">🛠️ Custom OpenAI Compatible URL</option>
+                    `;
+                } else {
+                    qwenProvSel.innerHTML = `
+                        <option value="openrouter">🌐 OpenRouter (马来西亚首选：Google一键登录，无需手机号，含免费版千问)</option>
+                        <option value="siliconflow">⚡ 硅基流动 SiliconFlow (需中国大陆 +86 手机号)</option>
+                        <option value="dashscope">🏛️ 阿里云百炼官方 DashScope (需中国大陆 +86 手机号)</option>
+                        <option value="custom">🛠️ 自定义兼容接口 (Base URL)</option>
+                    `;
+                }
+                qwenProvSel.value = prevProv;
+            }
+
+            const qwenKeyInput = document.getElementById('qwenKeyInput');
+            if (qwenKeyInput) qwenKeyInput.placeholder = t('qwenKeyPlaceholder');
+
+            const i18n_fbEmailLabel = document.getElementById('i18n_fbEmailLabel');
+            if (i18n_fbEmailLabel) i18n_fbEmailLabel.innerText = t('i18n_fbEmailLabel');
+
+            const devFeedbackEmailInput = document.getElementById('devFeedbackEmailInput');
+            if (devFeedbackEmailInput) devFeedbackEmailInput.placeholder = t('fbEmailPlaceholder');
+
+            const i18n_fbEmailTip = document.getElementById('i18n_fbEmailTip');
+            if (i18n_fbEmailTip) i18n_fbEmailTip.innerText = t('i18n_fbEmailTip');
+
+            const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+            if (saveSettingsBtn) saveSettingsBtn.innerText = t('saveSettingsBtn');
+
+            const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+            if (closeSettingsBtn) closeSettingsBtn.innerText = t('closeSettingsBtn');
+
+            const appVersionText = document.getElementById('appVersionText');
+            if (appVersionText) appVersionText.innerText = t('appVersionText');
+
+            const forceRefreshBtn = document.getElementById('forceRefreshBtn');
+            if (forceRefreshBtn) forceRefreshBtn.innerText = t('forceRefreshBtn');
+
+            // 反馈模态框
+            const feedbackModalTitle = document.getElementById('feedbackModalTitle');
+            if (feedbackModalTitle) feedbackModalTitle.innerText = t('feedbackModalTitle');
+
+            const feedbackModalSubtitle = document.getElementById('feedbackModalSubtitle');
+            if (feedbackModalSubtitle) feedbackModalSubtitle.innerText = t('feedbackModalSubtitle');
+
+            const i18n_fbTypeLabel = document.getElementById('i18n_fbTypeLabel');
+            if (i18n_fbTypeLabel) i18n_fbTypeLabel.innerText = t('i18n_fbTypeLabel');
+
+            const fbTypeSel = document.getElementById('fbType');
+            if (fbTypeSel) {
+                const prevType = fbTypeSel.value;
+                if (isEn) {
+                    fbTypeSel.innerHTML = `
+                        <option value="Feature Suggestion">💡 Feature Suggestion</option>
+                        <option value="OCR / Recognition Issue">🔍 OCR / Recognition Issue</option>
+                        <option value="Bug Report">⚠️ Bug Report</option>
+                        <option value="Other">💬 Other Feedback</option>
+                    `;
+                } else {
+                    fbTypeSel.innerHTML = `
+                        <option value="功能建议">💡 功能改进与建议</option>
+                        <option value="识别问题">🔍 收据识别不准确</option>
+                        <option value="系统Bug">⚠️ 报错或Bug</option>
+                        <option value="其他">💬 其他想法</option>
+                    `;
+                }
+                fbTypeSel.value = prevType;
+            }
+
+            const i18n_fbContactLabel = document.getElementById('i18n_fbContactLabel');
+            if (i18n_fbContactLabel) i18n_fbContactLabel.innerText = t('i18n_fbContactLabel');
+
+            const fbContact = document.getElementById('fbContact');
+            if (fbContact) fbContact.placeholder = t('fbContactPlaceholder');
+
+            const i18n_fbContentLabel = document.getElementById('i18n_fbContentLabel');
+            if (i18n_fbContentLabel) i18n_fbContentLabel.innerText = t('i18n_fbContentLabel');
+
+            const fbContent = document.getElementById('fbContent');
+            if (fbContent) fbContent.placeholder = t('fbContentPlaceholder');
+
+            const submitFbBtn = document.getElementById('submitFbBtn');
+            if (submitFbBtn) submitFbBtn.innerText = t('submitFbBtn');
+
+            const closeFbBtn = document.getElementById('closeFbBtn');
+            if (closeFbBtn) closeFbBtn.innerText = t('closeFbBtn');
+
+            const exportFbBtn = document.getElementById('exportFbBtn');
+            if (exportFbBtn) exportFbBtn.innerText = t('exportFbBtn');
+
+            // 同步当前引擎 UI 状态与分类筛选下拉选项
+            updateEngineUI();
+            initCategoryFilter();
+            renderCurrentUser();
+        }
 
         // 获取当前 AI 引擎
         function getSelectedEngine() {
@@ -964,9 +1475,7 @@
         // 初始化
         window.onload = function() {
             initUserSelect();
-            initCategoryFilter();
-            updateEngineUI();
-            renderCurrentUser();
+            applyLanguage();
 
             // 点击弹窗背景遮罩外部快速关闭弹窗
             document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -982,22 +1491,25 @@
         // 更新引擎 UI 提示
         function updateEngineUI() {
             const engine = getSelectedEngine();
+            const isEn = getCurrentLanguage() === 'en';
             const badge = document.getElementById('currentEngineBadge');
             const subtext = document.getElementById('uploadSubtext');
             const aiCard = document.getElementById('aiQueryCard');
 
+            if (!badge || !subtext) return;
+
             if (engine === 'gemini') {
-                badge.innerText = '🤖 当前引擎: Google Gemini';
-                subtext.innerText = '拍照后由 Gemini 自动识别实付 RM 金额';
-                aiCard.style.display = 'block';
+                badge.innerText = isEn ? '🤖 Engine: Google Gemini' : '🤖 当前引擎: Google Gemini';
+                subtext.innerText = isEn ? 'AI auto-extracts RM total amount upon photo upload' : '拍照后由 Gemini 自动识别实付 RM 金额';
+                if (aiCard) aiCard.style.display = 'block';
             } else if (engine === 'qwen') {
-                badge.innerText = '🌐 当前引擎: 开源千问 Qwen 2.5-VL';
-                subtext.innerText = '拍照后由开源大模型安全识别小票';
-                aiCard.style.display = 'block';
+                badge.innerText = isEn ? '🌐 Engine: Qwen 2.5-VL' : '🌐 当前引擎: 开源千问 Qwen 2.5-VL';
+                subtext.innerText = isEn ? 'Open-source multimodal model parses receipt securely' : '拍照后由开源大模型安全识别小票';
+                if (aiCard) aiCard.style.display = 'block';
             } else {
-                badge.innerText = '✍️ 当前模式: 纯手动拍照记账';
-                subtext.innerText = '仅拍照保存小票图片，无需 AI，纯本地记账';
-                aiCard.style.display = 'none'; // 手动模式隐藏 AI 提问卡片
+                badge.innerText = isEn ? '✍️ Mode: Manual (Photo)' : '✍️ 当前模式: 纯手动拍照记账';
+                subtext.innerText = isEn ? 'Local photo archive only, zero AI, zero data used' : '仅拍照保存小票图片，无需 AI，纯本地记账';
+                if (aiCard) aiCard.style.display = 'none'; // 手动模式隐藏 AI 提问卡片
             }
         }
 
@@ -1028,8 +1540,11 @@
             const current = getCurrentUser();
             const sel = document.getElementById('userSelect');
             sel.innerHTML = users.map(u => `<option value="${u}" ${u === current ? 'selected' : ''}>${u}</option>`).join('');
-            document.getElementById('listTitle').innerText = '📋 ' + current + ' 的收据清单';
-            document.getElementById('aiCardTitle').innerText = '🤖 ' + current + ' 的智能问账';
+            const isEn = getCurrentLanguage() === 'en';
+            const listTitle = document.getElementById('listTitle');
+            if (listTitle) listTitle.innerText = isEn ? ('📋 ' + current + '\'s Receipts') : ('📋 ' + current + ' 的收据清单');
+            const aiCardTitle = document.getElementById('aiCardTitle');
+            if (aiCardTitle) aiCardTitle.innerText = isEn ? ('🤖 ' + current + '\'s Financial AI') : ('🤖 ' + current + ' 的智能问账');
         }
 
         function onUserChange(newUser) {
@@ -1039,11 +1554,11 @@
         }
 
         function addUser() {
-            const name = prompt("请输入新账本的名字（例如: 个人日常 / 爸爸 / 装修专用）:");
+            const name = prompt(t('promptNewLedger'));
             if (!name || !name.trim()) return;
             const clean = name.trim();
             let users = getUserList();
-            if (users.includes(clean)) { alert("该账本已存在！"); return; }
+            if (users.includes(clean)) { alert(t('alertLedgerExists')); return; }
             users.push(clean);
             localStorage.setItem(USERS_KEY, JSON.stringify(users));
             onUserChange(clean);
@@ -1063,14 +1578,24 @@
         // 筛选逻辑
         function initCategoryFilter() {
             const catSel = document.getElementById('filterCategory');
-            catSel.innerHTML = '<option value="ALL">🏷️ 所有消费类别</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            if (!catSel) return;
+            const cur = catSel.value;
+            const isEn = getCurrentLanguage() === 'en';
+            const allLabel = isEn ? '🏷️ All Categories' : '🏷️ 所有消费类别';
+            catSel.innerHTML = `<option value="ALL">${allLabel}</option>` + categories.map(c => {
+                const meta = getCategoryMeta(c);
+                const name = getCategoryDisplayName(c);
+                return `<option value="${c}" ${c === cur ? 'selected' : ''}>${meta.icon} ${name}</option>`;
+            }).join('');
         }
 
         function updateTimeFilterOptions(list) {
             const yearSel = document.getElementById('filterYear');
             const monthSel = document.getElementById('filterMonth');
+            if (!yearSel || !monthSel) return;
             const curY = yearSel.value;
             const curM = monthSel.value;
+            const isEn = getCurrentLanguage() === 'en';
 
             const years = new Set();
             const months = new Set();
@@ -1084,10 +1609,12 @@
             });
 
             const sortedY = Array.from(years).sort().reverse();
-            yearSel.innerHTML = '<option value="ALL">📅 所有年份</option>' + sortedY.map(y => `<option value="${y}" ${y === curY ? 'selected' : ''}>${y} 年</option>`).join('');
+            const allYearsLabel = isEn ? '📅 All Years' : '📅 所有年份';
+            yearSel.innerHTML = `<option value="ALL">${allYearsLabel}</option>` + sortedY.map(y => `<option value="${y}" ${y === curY ? 'selected' : ''}>${isEn ? ('Year ' + y) : (y + ' 年')}</option>`).join('');
 
             const sortedM = Array.from(months).sort();
-            monthSel.innerHTML = '<option value="ALL">📆 所有月份</option>' + sortedM.map(m => `<option value="${m}" ${m === curM ? 'selected' : ''}>${m} 月</option>`).join('');
+            const allMonthsLabel = isEn ? '📆 All Months' : '📆 所有月份';
+            monthSel.innerHTML = `<option value="ALL">${allMonthsLabel}</option>` + sortedM.map(m => `<option value="${m}" ${m === curM ? 'selected' : ''}>${isEn ? ('Month ' + m) : (m + ' 月')}</option>`).join('');
         }
 
         function applyFilters() {
@@ -1116,17 +1643,19 @@
 
             // 更新 Hero 总览卡片周期标题标签
             const heroPeriodLabel = document.getElementById('heroPeriodLabel');
+            const isEn = getCurrentLanguage() === 'en';
             if (heroPeriodLabel) {
                 if (d) {
-                    heroPeriodLabel.innerText = `📅 ${d} 消费总览`;
+                    heroPeriodLabel.innerText = isEn ? `📅 Spending on ${d}` : `📅 ${d} 消费总览`;
                 } else if (y !== 'ALL' && m !== 'ALL') {
-                    heroPeriodLabel.innerText = `📅 ${y}年${m}月 消费总览`;
+                    heroPeriodLabel.innerText = isEn ? `📅 ${m}/${y} Overview` : `📅 ${y}年${m}月 消费总览`;
                 } else if (y !== 'ALL') {
-                    heroPeriodLabel.innerText = `📅 ${y}年度 消费总览`;
+                    heroPeriodLabel.innerText = isEn ? `📅 Year ${y} Overview` : `📅 ${y}年度 消费总览`;
                 } else if (c !== 'ALL') {
-                    heroPeriodLabel.innerText = `🏷️ ${c} 分类总览`;
+                    const catName = getCategoryDisplayName(c);
+                    heroPeriodLabel.innerText = isEn ? `🏷️ ${catName} Overview` : `🏷️ ${c} 分类总览`;
                 } else {
-                    heroPeriodLabel.innerText = '📊 支出总览';
+                    heroPeriodLabel.innerText = isEn ? '📊 Expense Overview' : '📊 支出总览';
                 }
             }
 
@@ -1151,6 +1680,7 @@
 
         function renderList(list, isFiltered = false) {
             const listDiv = document.getElementById('receiptList');
+            const isEn = getCurrentLanguage() === 'en';
             let total = 0;
             let maxAmount = 0;
             const catSums = {};
@@ -1177,7 +1707,7 @@
 
             // 更新 Hero 总览卡片核心指标
             const totalCountEl = document.getElementById('totalCount');
-            if (totalCountEl) totalCountEl.innerText = `${list.length} 笔支出`;
+            if (totalCountEl) totalCountEl.innerText = isEn ? `${list.length} Records` : `${list.length} 笔支出`;
 
             const totalAmountEl = document.getElementById('totalAmount');
             if (totalAmountEl) totalAmountEl.innerText = 'RM ' + total.toFixed(2);
@@ -1192,9 +1722,9 @@
             if (heroTopCatEl) {
                 if (topCat !== '无') {
                     const meta = getCategoryMeta(topCat);
-                    heroTopCatEl.innerText = `${meta.icon} ${topCat}`;
+                    heroTopCatEl.innerText = `${meta.icon} ${getCategoryDisplayName(topCat)}`;
                 } else {
-                    heroTopCatEl.innerText = '无';
+                    heroTopCatEl.innerText = isEn ? 'None' : '无';
                 }
             }
 
@@ -1202,8 +1732,10 @@
                 listDiv.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">🧾</div>
-                        <div class="empty-title">暂无收据记录</div>
-                        <div class="empty-sub">${isFiltered ? '未找到符合条件的账单，可尝试重置筛选' : '点击上方“拍照识别”或“手动输入”开始第一笔记账吧'}</div>
+                        <div class="empty-title">${isEn ? 'No receipts yet' : '暂无收据记录'}</div>
+                        <div class="empty-sub">${isFiltered 
+                            ? (isEn ? 'No matching records found, try resetting filters' : '未找到符合条件的账单，可尝试重置筛选') 
+                            : (isEn ? 'Tap "Snap Receipt" or "Manual Entry" above to add your first receipt' : '点击上方“拍照识别”或“手动输入”开始第一笔记账吧')}</div>
                     </div>
                 `;
                 return;
@@ -1212,6 +1744,8 @@
             listDiv.innerHTML = list.map(r => {
                 const meta = getCategoryMeta(r.category);
                 const amt = Number(r.amount) || 0;
+                const catDisplay = getCategoryDisplayName(r.category || '其他');
+                const engineText = r.engine ? (isEn ? 'Parsed by ' + escapeHtml(r.engine) : '由 ' + escapeHtml(r.engine) + ' 录入') : (isEn ? 'Manual Entry' : '手动录入');
                 return `
                     <div class="receipt-item" style="border-left-color: ${meta.color};">
                         <div class="receipt-header">
@@ -1219,35 +1753,35 @@
                                 <div class="merchant-avatar" style="background:${meta.bg}; color:${meta.color}; border: 1px solid ${meta.border};">
                                     ${meta.icon}
                                 </div>
-                                <span class="merchant">${escapeHtml(r.merchant || '未命名商家')}</span>
+                                <span class="merchant">${escapeHtml(r.merchant || (isEn ? 'Unnamed Merchant' : '未命名商家'))}</span>
                             </div>
                             <span class="amount">RM ${amt.toFixed(2)}</span>
                         </div>
 
                         <div class="receipt-meta-row">
                             <span class="cat-pill" style="background:${meta.bg}; color:${meta.color}; border:1px solid ${meta.border};">
-                                ${meta.icon} ${escapeHtml(r.category || '其他')}
+                                ${meta.icon} ${escapeHtml(catDisplay)}
                             </span>
                             <span>📅 ${escapeHtml(r.date || '')}</span>
                         </div>
 
                         ${r.notes ? `
                             <div class="receipt-note-box">
-                                <b>📝 明细备注:</b> ${escapeHtml(r.notes)}
+                                <b>${isEn ? '📝 Notes:' : '📝 明细备注:'}</b> ${escapeHtml(r.notes)}
                             </div>
                         ` : ''}
 
                         ${r.photo ? `
                             <div style="margin-bottom:10px;">
-                                <img src="${r.photo}" class="receipt-photo-thumb" onclick="previewFullPhoto('${r.photo}')" title="点击查看大图">
+                                <img src="${r.photo}" class="receipt-photo-thumb" onclick="previewFullPhoto('${r.photo}')" title="${isEn ? 'Click to view photo' : '点击查看大图'}">
                             </div>
                         ` : ''}
 
                         <div class="actions">
-                            <span style="font-size:11px; color:#94a3b8;">${r.engine ? '由 ' + escapeHtml(r.engine) + ' 录入' : '手动录入'}</span>
+                            <span style="font-size:11px; color:#94a3b8;">${engineText}</span>
                             <div style="display:flex; gap:6px;">
-                                <button class="btn-edit" onclick="editReceipt('${r.id}')">✏️ 修改</button>
-                                <button class="btn-del" onclick="deleteReceipt('${r.id}')">删除</button>
+                                <button class="btn-edit" onclick="editReceipt('${r.id}')">${isEn ? '✏️ Edit' : '✏️ 修改'}</button>
+                                <button class="btn-del" onclick="deleteReceipt('${r.id}')">${isEn ? 'Delete' : '删除'}</button>
                             </div>
                         </div>
                     </div>
@@ -1337,7 +1871,7 @@
                 return;
             }
 
-            const prompt = "请分析这张收据/发票（通常为马来西亚RM格式），提取实付总额(Net Paid纯浮点数)并仅输出纯JSON：{\"merchant\": \"商家名\", \"date\": \"YYYY-MM-DD\", \"amount\": 12.34, \"category\": \"餐饮美食\", \"notes\": \"商品名\"}";
+            const prompt = "请分析这张收据/发票（通常为马来西亚RM格式），提取实付总额(Net Paid纯浮点数)并仅输出纯JSON：{\"merchant\": \"商家名\", \"date\": \"YYYY-MM-DD\", \"amount\": 12.34, \"category\": \"餐饮美食\", \"notes\": \"商品名\"}。注意：category可选(餐饮美食/超市便利/交通出行/工作器材与备件/休闲娱乐/医疗保健/电子数码/其他)。若涉及机械设备、五金工具、机器备件(Spare Parts)、维修零件等生意相关耗材，分类请严格填写为\"工作器材与备件\"。";
             const payload = {
                 contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }]
             };
@@ -1403,7 +1937,7 @@
                 candidateVisionModels = ["Qwen/Qwen2.5-VL-7B-Instruct"];
             }
 
-            const prompt = "请分析这张收据小票（通常为马来西亚RM格式），提取实付RM金额，输出纯JSON: {\"merchant\": \"商家\", \"date\": \"YYYY-MM-DD\", \"amount\": 12.34, \"category\": \"餐饮美食\", \"notes\": \"主要物品\"}";
+            const prompt = "请分析这张收据小票（通常为马来西亚RM格式），提取实付RM金额，输出纯JSON: {\"merchant\": \"商家\", \"date\": \"YYYY-MM-DD\", \"amount\": 12.34, \"category\": \"餐饮美食\", \"notes\": \"主要物品\"}。注意：category可选(餐饮美食/超市便利/交通出行/工作器材与备件/休闲娱乐/医疗保健/电子数码/其他)。若涉及机械五金、工具设备、零件备件(Spare Parts)等生意开支，请归为\"工作器材与备件\"。";
 
             try {
                 let lastErr = null;
@@ -1501,13 +2035,17 @@
             activeEditReceipt = receipt;
             isCreatingNew = isNew;
 
-            document.getElementById('modalTitle').innerText = isNew ? '📋 核对收据信息' : '✏️ 修改收据信息';
+            document.getElementById('modalTitle').innerText = isNew ? t('editModalNewTitle') : t('editModalEditTitle');
             document.getElementById('editMerchant').value = receipt.merchant || '';
             document.getElementById('editAmount').value = receipt.amount || '';
             document.getElementById('editDate').value = receipt.date || '';
 
             const catSel = document.getElementById('editCategory');
-            catSel.innerHTML = categories.map(c => `<option value="${c}" ${c === receipt.category ? 'selected' : ''}>${c}</option>`).join('');
+            catSel.innerHTML = categories.map(c => {
+                const meta = getCategoryMeta(c);
+                const name = getCategoryDisplayName(c);
+                return `<option value="${c}" ${c === receipt.category ? 'selected' : ''}>${meta.icon} ${name}</option>`;
+            }).join('');
 
             document.getElementById('editNotes').value = receipt.notes || '';
 
@@ -1532,7 +2070,8 @@
         function confirmSaveModal() {
             if (!activeEditReceipt) return;
 
-            const m = document.getElementById('editMerchant').value.trim() || '日常消费';
+            const isEn = getCurrentLanguage() === 'en';
+            const m = document.getElementById('editMerchant').value.trim() || (isEn ? 'Daily Expense' : '日常消费');
             const a = parseFloat(document.getElementById('editAmount').value) || 0.0;
             const d = document.getElementById('editDate').value || new Date().toISOString().split('T')[0];
             const c = document.getElementById('editCategory').value;
@@ -1547,12 +2086,12 @@
             let list = getCurrentUserReceipts();
             if (isCreatingNew) {
                 list.unshift(activeEditReceipt);
-                alert('✅ 收据已成功保存！');
+                alert(t('alertSavedSuccess'));
             } else {
                 const idx = list.findIndex(r => String(r.id) === String(activeEditReceipt.id));
                 if (idx !== -1) {
                     list[idx] = activeEditReceipt;
-                    alert('✅ 收据修改成功！');
+                    alert(t('alertUpdatedSuccess'));
                 }
             }
 
@@ -1567,7 +2106,7 @@
         }
 
         function deleteReceipt(id) {
-            if (!confirm('确定删除此条收据吗？')) return;
+            if (!confirm(t('confirmDeleteReceipt'))) return;
             let list = getCurrentUserReceipts();
             list = list.filter(r => String(r.id) !== String(id));
             saveCurrentUserReceipts(list);
@@ -1580,7 +2119,7 @@
 
             const list = getCurrentUserReceipts();
             if (list.length === 0) { 
-                alert('账本暂无收据，请先记一笔账！'); 
+                alert(t('alertEmptyLedgerForAi')); 
                 return; 
             }
 
@@ -1593,28 +2132,51 @@
             aiAnswerCard.style.display = 'none';
 
             const engine = getSelectedEngine();
+            const isEn = getCurrentLanguage() === 'en';
             if (aiAnswerBotName) {
-                aiAnswerBotName.innerText = engine === 'qwen' ? '✨ 通义千问财务顾问' : '✨ Gemini 智能财务顾问';
+                if (isEn) {
+                    aiAnswerBotName.innerText = engine === 'qwen' ? '✨ Qwen Financial Advisor' : '✨ Gemini Financial Advisor';
+                } else {
+                    aiAnswerBotName.innerText = engine === 'qwen' ? '✨ 通义千问财务顾问' : '✨ Gemini 智能财务顾问';
+                }
             }
 
-            let promptText = `你是专业的个人消费财务顾问。以下是用户在当前账本中保存的真实收据与消费明细数据：\n`;
-            list.forEach((r, idx) => {
-                promptText += `${idx + 1}. 日期: ${r.date}, 商家: ${r.merchant}, 金额: RM ${Number(r.amount).toFixed(2)}, 分类: ${r.category}, 商品明细/备注: ${r.notes || '未详细填写'}\n`;
-            });
-            promptText += `\n用户当前提问: "${query}"\n` +
-                `请遵循以下格式规范生成整洁、易读、富有视觉层次的财务分析：\n` +
-                `1. 货币单位统一严格使用马来西亚令吉格式，例如: RM 15.00，不要使用其他货币符号；\n` +
-                `2. 使用清晰的 Markdown 层次结构：包含 2-3 个核心小标题（例如: "### 📊 消费总览"、"### 🛒 重点明细"、"### 💡 财务洞察与省钱建议"）；\n` +
-                `3. 具体明细或梳理请使用列表符号 (* 或 -) 逐条列出，重点商家和金额用粗体强调；\n` +
-                `4. 如果某笔消费未填写具体商品明细（备注为空），可贴心提醒用户：“该笔记录可在账本列表中点击【✏️ 修改】补充填写商品名”；\n` +
-                `5. 最后给出 1 条简短实用的理财建议（以 "💡 省钱建议：" 开头）；\n` +
-                `6. 语言亲切专业、条理分明，避免杂乱的一大坨纯文字。`;
+            let promptText = "";
+            if (isEn) {
+                promptText = `You are a professional personal and business financial advisor. Here is the user's authentic receipt expense records in Malaysian Ringgit (RM):\n`;
+                list.forEach((r, idx) => {
+                    promptText += `${idx + 1}. Date: ${r.date}, Merchant: ${r.merchant}, Amount: RM ${Number(r.amount).toFixed(2)}, Category: ${r.category} (${CATEGORY_NAMES_EN[r.category] || r.category}), Notes/Items: ${r.notes || 'None specified'}\n`;
+                });
+                promptText += `\nUser's question: "${query}"\n` +
+                    `Please follow these formatting guidelines to generate clean, readable, visually structured financial insights:\n` +
+                    `1. Currency must strictly use Malaysian Ringgit (RM), e.g., RM 15.00, do not use other currency symbols;\n` +
+                    `2. Use clear Markdown structure: include 2-3 section headers (e.g., "### 📊 Spending Overview", "### 🛒 Key Breakdown", "### 💡 Financial Insights & Savings Tips");\n` +
+                    `3. Use bullet points (* or -) for itemized lists, bold key merchant names and amounts;\n` +
+                    `4. If notes are missing for an expense, kindly suggest that the user can click [✏️ Edit] to supplement details;\n` +
+                    `5. If the user asks about business expenses, auditing, or "Equipment & Spare Parts" (工作器材与备件), list each hardware tool/spare part purchased by date with single amounts and total sum for easy business reconciliation;\n` +
+                    `6. End with 1 concise, actionable tip starting with "💡 Advice: ";\n` +
+                    `7. Friendly, professional tone with crisp visual hierarchy, avoiding walls of plain text.`;
+            } else {
+                promptText = `你是专业的个人消费与商业财务顾问。以下是用户在当前账本中保存的真实收据与消费明细数据：\n`;
+                list.forEach((r, idx) => {
+                    promptText += `${idx + 1}. 日期: ${r.date}, 商家: ${r.merchant}, 金额: RM ${Number(r.amount).toFixed(2)}, 分类: ${r.category}, 商品明细/备注: ${r.notes || '未详细填写'}\n`;
+                });
+                promptText += `\n用户当前提问: "${query}"\n` +
+                    `请遵循以下格式规范生成整洁、易读、富有视觉层次的财务分析：\n` +
+                    `1. 货币单位统一严格使用马来西亚令吉格式，例如: RM 15.00，不要使用其他货币符号；\n` +
+                    `2. 使用清晰的 Markdown 层次结构：包含 2-3 个核心小标题（例如: "### 📊 消费总览"、"### 🛒 重点明细"、"### 💡 财务洞察与省钱建议"）；\n` +
+                    `3. 具体明细或梳理请使用列表符号 (* 或 -) 逐条列出，重点商家和金额用粗体强调；\n` +
+                    `4. 如果某笔消费未填写具体商品明细（备注为空），可贴心提醒用户：“该笔记录可在账本列表中点击【✏️ 修改】补充填写商品名”；\n` +
+                    `5. 若用户询问生意成本、对账，或涉及【工作器材与备件】分类，请重点按日期分条梳理各项器材与零件备件的采购品名、单笔金额及合计总开销，方便生意对账与回查；\n` +
+                    `6. 最后给出 1 条简短实用的财务/生意成本建议（以 "💡 建议：" 开头）；\n` +
+                    `7. 语言亲切专业、条理分明，避免杂乱的一大坨纯文字。`;
+            }
 
             try {
                 let answer = "";
                 if (engine === 'qwen') {
                     const key = localStorage.getItem(QWEN_KEY_STORAGE) || "";
-                    if (!key) throw new Error("未配置千问 API Key，请点击右上角【设置】进行填写！");
+                    if (!key) throw new Error(t('alertNeedQwenKey'));
 
                     const provider = localStorage.getItem(QWEN_PROVIDER_STORAGE) || "openrouter";
                     let endpoint = "";
@@ -1674,7 +2236,7 @@
                     if (!answer) throw new Error(lastChatErr || "AI 未返回分析结果");
                 } else {
                     const key = localStorage.getItem(GEMINI_KEY_STORAGE) || "";
-                    if (!key) throw new Error("未配置 Gemini API Key，请点击右上角【设置】进行填写！");
+                    if (!key) throw new Error(t('alertNeedGeminiKey'));
 
                     const payload = { contents: [{ parts: [{ text: promptText }] }] };
                     const result = await fetchGeminiWithFallback(payload, key);
@@ -1714,6 +2276,14 @@
             onQwenProviderChange(prov);
 
             onEngineChange(getSelectedEngine());
+
+            // 语言与接收邮箱
+            const langSel = document.getElementById('langSelect');
+            if (langSel) langSel.value = getCurrentLanguage();
+
+            const fbEmailInput = document.getElementById('devFeedbackEmailInput');
+            if (fbEmailInput) fbEmailInput.value = localStorage.getItem(FEEDBACK_EMAIL_STORAGE) || "";
+
             document.getElementById('settingsModal').style.display = 'flex';
         }
 
@@ -1729,14 +2299,23 @@
         function onQwenProviderChange(prov) {
             document.getElementById('qwenCustomUrlGroup').style.display = (prov === 'custom') ? 'block' : 'none';
             const tip = document.getElementById('qwenTipText');
+            const isEn = getCurrentLanguage() === 'en';
             if (prov === 'openrouter') {
-                tip.innerText = "🌐 OpenRouter：最适合马来西亚用户！直接使用 Google 账号一键登录即可创建 API Key，完全无需任何手机号码，包含免费版通义千问！";
+                tip.innerText = isEn 
+                    ? "🌐 OpenRouter: Best for international / Malaysian users! Sign in with Google in 1-click to get an API Key with zero phone verification, includes free Qwen models!" 
+                    : "🌐 OpenRouter：最适合马来西亚用户！直接使用 Google 账号一键登录即可创建 API Key，完全无需任何手机号码，包含免费版通义千问！";
             } else if (prov === 'siliconflow') {
-                tip.innerText = "⚡ 硅基流动：国内平台，需要中国大陆 +86 手机号注册。";
+                tip.innerText = isEn 
+                    ? "⚡ SiliconFlow: Platform in China, requires Mainland China (+86) phone number for SMS." 
+                    : "⚡ 硅基流动：国内平台，需要中国大陆 +86 手机号注册。";
             } else if (prov === 'dashscope') {
-                tip.innerText = "🏛️ 阿里云百炼官方：国内平台，需要中国大陆 +86 手机号与实名认证。";
+                tip.innerText = isEn 
+                    ? "🏛️ DashScope Official: Alibaba Cloud official, requires China (+86) phone & identity verification." 
+                    : "🏛️ 阿里云百炼官方：国内平台，需要中国大陆 +86 手机号与实名认证。";
             } else {
-                tip.innerText = "🛠️ 自定义：请输入兼容 OpenAI 格式的 API 端点地址。";
+                tip.innerText = isEn 
+                    ? "🛠️ Custom: Please enter an OpenAI compatible API base URL." 
+                    : "🛠️ 自定义：请输入兼容 OpenAI 格式的 API 端点地址。";
             }
         }
 
@@ -1756,9 +2335,15 @@
             const customUrl = document.getElementById('qwenCustomUrlInput').value.trim();
             if (customUrl) localStorage.setItem(QWEN_CUSTOM_URL_STORAGE, customUrl);
 
+            const fbEmail = document.getElementById('devFeedbackEmailInput').value.trim();
+            localStorage.setItem(FEEDBACK_EMAIL_STORAGE, fbEmail);
+
+            const lang = document.getElementById('langSelect').value;
+            switchAppLanguage(lang);
+
             updateEngineUI();
             closeSettingsModal();
-            alert("✅ 设置已保存！");
+            alert(t('alertSettingsSaved'));
         }
 
         // 强制刷新并清除客户端缓存
@@ -1782,18 +2367,22 @@
             document.getElementById('fbContent').value = '';
         }
 
-        function submitFeedback() {
+        async function submitFeedback() {
             const type = document.getElementById('fbType').value;
             const contact = document.getElementById('fbContact').value.trim();
             const content = document.getElementById('fbContent').value.trim();
+            const isEn = getCurrentLanguage() === 'en';
 
-            if (!content) { alert('请输入您的反馈内容！'); return; }
+            if (!content) { 
+                alert(t('alertEnterContent')); 
+                return; 
+            }
 
             const feedbackItem = {
                 id: 'fb_' + Date.now(),
                 time: new Date().toLocaleString(),
                 type: type,
-                contact: contact || '匿名',
+                contact: contact || (isEn ? 'Anonymous' : '匿名'),
                 content: content,
                 userAgent: navigator.userAgent
             };
@@ -1805,17 +2394,53 @@
             localStorage.setItem(FEEDBACK_STORAGE, JSON.stringify(allFb));
 
             // 2. 尝试向电脑端后端同步 (如果电脑开着服务)
-            fetch('/api/feedback', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(feedbackItem)
-            }).catch(() => {});
+            try {
+                fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(feedbackItem)
+                }).catch(() => {});
+            } catch(e) {}
 
-            alert('💌 感谢您的宝贵反馈！已成功提交！');
+            // 3. Web3Forms 邮件直发 (手机端直连开发者邮箱，电脑即时接收)
+            const targetEmail = localStorage.getItem(FEEDBACK_EMAIL_STORAGE) || '';
+            if (targetEmail) {
+                try {
+                    const isKey = targetEmail.length > 20 && !targetEmail.includes('@');
+                    fetch('https://api.web3forms.com/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            access_key: isKey ? targetEmail : 'e030b42d-7bb7-483d-9f44-93b547d2f95c',
+                            email: targetEmail.includes('@') ? targetEmail : undefined,
+                            from_name: 'Receipt App User',
+                            subject: `[Receipt App 反馈] ${type} - ${contact || '用户'}`,
+                            message: `反馈类型: ${type}\n联系方式: ${contact || '未提供'}\n时间: ${feedbackItem.time}\n设备环境: ${navigator.userAgent}\n\n详细内容:\n${content}`
+                        })
+                    }).catch(() => {});
+                } catch(e) {}
+            }
+
+            alert(t('alertFbSuccess'));
             closeFeedbackModal();
         }
 
-        // 导出备份
+        function exportFeedbackData() {
+            let allFb = [];
+            try { allFb = JSON.parse(localStorage.getItem(FEEDBACK_STORAGE)) || []; } catch(e) {}
+            if (allFb.length === 0) {
+                alert(t('alertNoLocalFb'));
+                return;
+            }
+            const blob = new Blob([JSON.stringify(allFb, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ReceiptApp_Feedback_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+        }
+
+        // 导出收据账单备份
         function exportUserData() {
             const u = getCurrentUser();
             const list = getCurrentUserReceipts();
@@ -1823,7 +2448,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = u + '_收据账单备份_' + new Date().toISOString().split('T')[0] + '.json';
+            a.download = u + '_ReceiptBackup_' + new Date().toISOString().split('T')[0] + '.json';
             a.click();
         }
     </script>
